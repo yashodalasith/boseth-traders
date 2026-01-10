@@ -24,6 +24,7 @@ const Products = () => {
   });
 
   const [products, setProducts] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -40,6 +41,7 @@ const Products = () => {
       setLoading(true);
       const response = await getItems(filters);
       setProducts(response.items);
+      setTotalItems(response.totalItems);
       setTotalPages(response.totalPages);
     } catch (error) {
       console.error("Error loading products:", error);
@@ -192,8 +194,7 @@ const Products = () => {
             {/* Desktop View Toggle */}
             <div className="hidden lg:flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow">
               <p className="text-gray-600">
-                Showing {products.length} of {totalPages * filters.limit}{" "}
-                products
+                Showing {products.length} of {totalItems} products
               </p>
 
               <div className="flex items-center space-x-4">

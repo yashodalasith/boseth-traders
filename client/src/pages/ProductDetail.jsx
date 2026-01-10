@@ -260,23 +260,37 @@ const ProductDetail = () => {
                 <p className="text-gray-700 mb-6">{product.description}</p>
 
                 {/* Features */}
-                {product.features && product.features.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      Features
-                    </h3>
-                    <ul className="space-y-2">
-                      {product.features.map((feature, index) => (
-                        <li key={index} className="flex items-center">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{feature.key}:</strong> {feature.value}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {product &&
+                  (() => {
+                    const validFeatures = product.features?.filter(
+                      (f) => f.key?.trim() && f.value?.trim()
+                    );
+
+                    return validFeatures && validFeatures.length > 0 ? (
+                      <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                          Features
+                        </h3>
+                        <ul className="space-y-2">
+                          {validFeatures.map((feature, index) => (
+                            <li key={index} className="flex items-center">
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{feature.key}:</strong> {feature.value}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                          Features
+                        </h3>
+                        <p className="text-gray-500 italic">Not specified</p>
+                      </div>
+                    );
+                  })()}
 
                 {product.availability === "available" && (
                   <div className="flex flex-col items-start mb-6">
