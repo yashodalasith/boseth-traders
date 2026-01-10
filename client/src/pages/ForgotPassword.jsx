@@ -23,8 +23,15 @@ const ForgotPassword = () => {
       setError("");
       setMessage("");
       setLoading(true);
-      await forgotPassword(email);
-      setMessage("Check your inbox for further instructions");
+      const result = await forgotPassword(email);
+
+      if (result.success) {
+        setMessage(
+          "If an account with that email exists, a reset link has been sent."
+        );
+      } else {
+        setError(result.message);
+      }
     } catch (err) {
       setError("Failed to reset password. Please try again.");
     } finally {
