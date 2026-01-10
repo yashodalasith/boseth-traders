@@ -1,6 +1,6 @@
 // client/src/pages/ResetPassword.jsx
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -11,8 +11,7 @@ const ResetPassword = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const { token } = useParams();
   const navigate = useNavigate();
   const { resetPassword } = useAuth();
 
