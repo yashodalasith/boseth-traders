@@ -3,8 +3,6 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
 const hpp = require("hpp");
 const passport = require("passport");
 require("dotenv").config();
@@ -16,6 +14,7 @@ const categoryRoutes = require("./routes/categories");
 const brandRoutes = require("./routes/brands");
 const salesRoutes = require("./routes/sales");
 const userRoutes = require("./routes/users");
+const sanitizeMiddleware = require("./middleware/sanitize");
 
 // Initialize express app
 const app = express();
@@ -30,9 +29,11 @@ app.use(
 );
 
 // Rate limiting
+const windowMinutes = parseInt(process.env.RATE_LIMIT_WINDOW_MINUTES, 10) || 15;
+const maxRequests = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100;
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: windowMinutes * 60 * 1000, // 15 minutes
+  max: maxRequests, // limit each IP to 100 requests per windowMs
   message: {
     error: "Too many requests from this IP, please try again later.",
   },
@@ -44,8 +45,8 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Data sanitization
-// app.use(mongoSanitize());
-// app.use(xss());
+app.use(sanitizeMiddleware);
+
 app.use(
   hpp({
     whitelist: [
@@ -77,10 +78,10 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/users", userRoutes);
 
 // Error handling middleware
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(500).json({ message: "Something went wrong!" });
-// });
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
+});
 
 // 404 handler
 app.use((req, res) => {

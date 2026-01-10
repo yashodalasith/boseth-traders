@@ -53,7 +53,10 @@ router.get("/", async (req, res) => {
         filter.price.$lte = parseFloat(req.query.maxPrice);
     }
 
-    // Get items with population
+    // Get total count first
+    const totalItems = await Item.countDocuments(filter);
+
+    // Fetch items with pagination
     const items = await Item.find(filter)
       .populate("category", "name")
       .populate("brand", "name")
@@ -61,16 +64,14 @@ router.get("/", async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Get total count for pagination
-    const total = await Item.countDocuments(filter);
-
     res.json({
       items,
-      totalPages: Math.ceil(total / limit),
+      totalItems, // total number of matching products
+      totalPages: Math.ceil(totalItems / limit),
       currentPage: page,
-      total,
     });
   } catch (error) {
+    console.error("Error fetching items:", error);
     res.status(500).json({ message: error.message });
   }
 });
