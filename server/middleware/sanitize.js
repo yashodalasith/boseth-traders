@@ -1,37 +1,44 @@
 // middlewares/sanitize.js
 const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
+const xss = require("xss"); // use xss package, not xss-clean
 
 /**
  * Recursively sanitize an object:
  * - Strings: XSS-cleaned
- * - Objects/Arrays: sanitized recursively
- * - Other types: returned as-is
+ * - Arrays/Objects: recursively sanitized
+ * - Other types: left as-is
  */
 const sanitizeObject = (obj) => {
-  if (typeof obj === "string") return xss(obj); // sanitize string
-  if (Array.isArray(obj)) return obj.map(sanitizeObject); // sanitize array elements
+  if (typeof obj === "string") {
+    return xss(obj); // safe XSS cleaning for strings only
+  }
+
+  if (Array.isArray(obj)) return obj.map(sanitizeObject);
+
   if (typeof obj === "object" && obj !== null) {
     return Object.fromEntries(
       Object.entries(obj).map(([key, val]) => [key, sanitizeObject(val)])
     );
   }
-  return obj; // numbers, booleans, null, etc.
+
+  return obj; // numbers, booleans, null, undefined remain as-is
 };
 
 // Middleware function
 const sanitizeMiddleware = (req, res, next) => {
-  if (req.body) {
-    const sanitizedBody = mongoSanitize.sanitize(req.body);
-    req.body = sanitizeObject(sanitizedBody);
-  }
+  if (req.body)
+    req.body = sanitizeObject(
+      mongoSanitize.sanitize(req.body, { replaceWith: "" })
+    );
+  if (req.params)
+    req.params = sanitizeObject(
+      mongoSanitize.sanitize(req.params, { replaceWith: "" })
+    );
+  if (req.query)
+    req.query = sanitizeObject(
+      mongoSanitize.sanitize(req.query, { replaceWith: "" })
+    );
 
-  if (req.params) {
-    const sanitizedParams = mongoSanitize.sanitize(req.params);
-    req.params = sanitizeObject(sanitizedParams);
-  }
-
-  // Do NOT sanitize req.query to avoid read-only error
   next();
 };
 

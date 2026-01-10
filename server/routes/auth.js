@@ -93,53 +93,51 @@ router.post("/login", async (req, res) => {
 // Forgot password
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = req.body.email.trim().toLowerCase();
 
-    // 1. Find the user
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+
+    if (user) {
+      const resetToken = crypto.randomBytes(32).toString("hex");
+
+      user.resetPasswordToken = crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+      user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
+      await user.save();
+
+      const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+      const message = `
+        <p>You requested a password reset.</p>
+        <p>Click the link below to reset your password:</p>
+        <a href="${resetUrl}" target="_blank">${resetUrl}</a>
+        <p>This link will expire in 10 minutes.</p>
+      `;
+
+      // 4. Configure transporter
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      // 5. Send the email
+      await transporter.sendMail({
+        to: user.email,
+        subject: "Password Reset Request",
+        html: message,
+      });
     }
 
-    // 2. Generate reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetPasswordToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    await user.save();
-
-    // 3. Create reset link
-    const resetUrl = `https://your-frontend-domain.com/reset-password/${resetToken}`; // 🔁 Replace with actual frontend URL
-
-    const message = `
-      <p>You requested a password reset.</p>
-      <p>Click the link below to reset your password:</p>
-      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-      <p>This link will expire in 10 minutes.</p>
-    `;
-
-    // 4. Configure transporter
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    // 5. Send the email
-    await transporter.sendMail({
-      to: user.email,
-      subject: "Password Reset Request",
-      html: message,
-    });
-
-    // 6. Respond with success message
+    // 🔒 Always return success (prevents email enumeration)
     res.json({
-      message: "Password reset link sent to your email.",
+      message:
+        "If an account with that email exists, a reset link has been sent.",
     });
   } catch (error) {
     console.error("Forgot Password Error:", error);
