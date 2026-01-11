@@ -3,6 +3,24 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Shield, Truck, Star, MapPin, Clock, Phone } from "lucide-react";
 
+const teamMembers = [
+  {
+    name: "Shirley Jayasinghe",
+    role: "Chairman",
+    image: "/images/team/shirley.jpg",
+  },
+  {
+    name: "Amitha Jayasinghe",
+    role: "Director",
+    image: "/images/team/amitha.jpg",
+  },
+  {
+    name: "Vinura Jayasinghe",
+    role: "Director",
+    image: "/images/team/vinura.jpg",
+  },
+];
+
 const About = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -20,9 +38,9 @@ const About = () => {
           <div className="prose prose-lg max-w-none">
             <p className="text-lg text-gray-600 mb-6">
               Welcome to Boseth Traders, your trusted partner for electronics,
-              electricals, and household essentials for nearly 20 years. Located
-              in the heart of Nugegoda, we have built a strong reputation as one
-              of Sri Lanka's leading providers of quality products.
+              electricals, and household essentials for many years. Located in
+              the heart of Nugegoda, we have built a strong reputation as one of
+              Sri Lanka's leading providers of quality products.
             </p>
 
             <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">
@@ -54,6 +72,35 @@ const About = () => {
           </div>
         </div>
 
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+            Our Team
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {teamMembers.map((member) => (
+              <motion.div
+                key={member.name}
+                className="text-center bg-gray-50 rounded-xl p-6 shadow hover:shadow-lg"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {member.name}
+                </h3>
+                <p className="text-green-600 font-medium">{member.role}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <motion.div
             className="bg-white rounded-2xl shadow-lg p-6 text-center"
@@ -64,7 +111,7 @@ const About = () => {
             </div>
             <h3 className="text-xl font-semibold mb-2">Trusted Quality</h3>
             <p className="text-gray-600">
-              20 years of excellence in providing quality products with warranty
+              Years of excellence in providing quality products with warranty
             </p>
           </motion.div>
 
@@ -77,7 +124,7 @@ const About = () => {
             </div>
             <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
             <p className="text-gray-600">
-              Island-wide delivery with secure packaging and quick turnaround
+              Smooth delivery with secure packaging and quick turnaround
             </p>
           </motion.div>
 
@@ -107,7 +154,7 @@ const About = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">Address</h3>
                   <p className="text-gray-600">
-                    123 Main Street, Nugegoda, Sri Lanka
+                    No.282 D 01, Kotte Road, Nugegoda, Sri Lanka
                   </p>
                 </div>
               </div>
@@ -117,9 +164,9 @@ const About = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">Opening Hours</h3>
                   <p className="text-gray-600">
-                    Monday - Saturday: 9:00 AM - 6:00 PM
+                    Monday - Saturday: 9:00 AM - 8:00 PM
                   </p>
-                  <p className="text-gray-600">Sunday: 10:00 AM - 4:00 PM</p>
+                  <p className="text-gray-600">Sunday: 9:00 AM - 6:00 PM</p>
                 </div>
               </div>
 
@@ -127,15 +174,27 @@ const About = () => {
                 <Phone size={24} className="text-green-600 mr-3" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Contact</h3>
-                  <p className="text-gray-600">+94 11 234 5678</p>
-                  <p className="text-gray-600">info@boseth.lk</p>
+                  <p className="text-gray-600">011 282 0387</p>
+                  <p className="text-gray-600">bosethtraders25@gmail.com</p>
                 </div>
               </div>
             </div>
 
-            <div className="h-64 bg-gray-200 rounded-lg overflow-hidden">
-              <div className="w-full h-full bg-green-200 flex items-center justify-center">
-                <span className="text-gray-600">Map of our location</span>
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-3">
+                Our Location on Map
+              </h3>
+
+              <div className="h-64 rounded-lg overflow-hidden border">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.1234567890!2d79.8998009!3d6.8795706!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25bca80351631%3A0x61ac8190bb4a0540!2sBoseth+Traders+Pvt+Ltd+-+Nugegoda!5e0!3m2!1sen!2slk!4v1700000000000!5m2!1sen!2slk"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               </div>
             </div>
           </div>
