@@ -19,20 +19,17 @@ router.get("/", async (req, res) => {
     // Build filter object
     let filter = {};
 
+    // Category Filter
     if (req.query.category) {
-      const category = await Category.findOne({
-        name: new RegExp(req.query.category, "i"),
-      });
-      if (category) filter.category = category._id;
+      filter.category = req.query.category; // Filter by category ID directly
     }
 
+    // Brand Filter
     if (req.query.brand) {
-      const brand = await Brand.findOne({
-        name: new RegExp(req.query.brand, "i"),
-      });
-      if (brand) filter.brand = brand._id;
+      filter.brand = req.query.brand; // Filter by brand ID directly
     }
 
+    // Search Filter
     if (req.query.search) {
       filter.$or = [
         { name: new RegExp(req.query.search, "i") },
@@ -41,10 +38,12 @@ router.get("/", async (req, res) => {
       ];
     }
 
+    // Availability Filter (if necessary)
     if (req.query.availability) {
       filter.availability = req.query.availability;
     }
 
+    // Price Range Filter
     if (req.query.minPrice || req.query.maxPrice) {
       filter.price = {};
       if (req.query.minPrice)
@@ -53,14 +52,30 @@ router.get("/", async (req, res) => {
         filter.price.$lte = parseFloat(req.query.maxPrice);
     }
 
+    // Has Discount Filter
+    if (req.query.hasDiscount === "true") {
+      filter.hasDiscount = true; // Only items with discounts
+    }
+
+    // Determine Sorting Order
+    let sort = { createdAt: -1 }; // Default to sorting by newest
+
+    if (req.query.sort === "price-low") {
+      sort = { price: 1 }; // Sort by price: low to high
+    } else if (req.query.sort === "price-high") {
+      sort = { price: -1 }; // Sort by price: high to low
+    } else if (req.query.sort === "name") {
+      sort = { name: 1 }; // Sort by name A-Z
+    }
+
     // Get total count first
     const totalItems = await Item.countDocuments(filter);
 
-    // Fetch items with pagination
+    // Fetch items with pagination and sorting
     const items = await Item.find(filter)
       .populate("category", "name")
       .populate("brand", "name")
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(limit);
 
