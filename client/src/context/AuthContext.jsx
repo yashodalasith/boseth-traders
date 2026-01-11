@@ -52,7 +52,8 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("token", token);
       api.defaults.headers.Authorization = `Bearer ${token}`;
-      setUser(user);
+      const meResponse = await api.get("/auth/me");
+      setUser(meResponse.data);
       await getFavorites();
       await getWishlist();
 

@@ -9,6 +9,22 @@ import { useItem } from "../context/ItemContext";
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const { getFeaturedProducts, getFavorites, getWishlist } = useItem();
+  const showroomImages = [
+    "/images/showroom-1.jpg",
+    "/images/showroom-2.jpg",
+    "/images/showroom-3.jpg",
+    "/images/showroom-4.jpg",
+    "/images/showroom-5.jpg",
+  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % showroomImages.length);
+    }, 4000); // 4 seconds
+
+    return () => clearInterval(interval);
+  }, [showroomImages.length]);
 
   useEffect(() => {
     const loadFeaturedProducts = async () => {
@@ -179,11 +195,53 @@ const Home = () => {
               viewport={{ once: true }}
             >
               <div className="relative">
-                <div className="w-full h-96 bg-green-200 rounded-2xl overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
-                  <div className="absolute bottom-6 left-6 text-white">
+                <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-xl">
+                  {showroomImages.map((img, index) => (
+                    <motion.div
+                      key={img}
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${img})` }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: index === currentSlide ? 1 : 0 }}
+                      transition={{ duration: 1 }}
+                    />
+                  ))}
+
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-10"></div>
+
+                  {/* Text Overlay */}
+                  <div className="absolute bottom-6 left-6 text-white z-20">
                     <h3 className="text-2xl font-bold">Our Showroom</h3>
-                    <p>Nugegoda, Sri Lanka</p>
+                    <p className="text-sm opacity-90">Nugegoda, Sri Lanka</p>
+                  </div>
+
+                  {/* Manual Controls */}
+                  <div className="absolute inset-y-0 left-3 flex items-center z-20">
+                    <button
+                      onClick={() =>
+                        setCurrentSlide(
+                          (currentSlide - 1 + showroomImages.length) %
+                            showroomImages.length
+                        )
+                      }
+                      className="bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                    >
+                      ‹
+                    </button>
+                  </div>
+
+                  <div className="absolute inset-y-0 right-3 flex items-center z-20">
+                    <button
+                      onClick={() =>
+                        setCurrentSlide(
+                          (currentSlide + 1) % showroomImages.length
+                        )
+                      }
+                      className="bg-black/40 hover:bg-black/60 text-white p-2 rounded-full"
+                    >
+                      ›
+                    </button>
                   </div>
                 </div>
               </div>
