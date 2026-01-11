@@ -1,8 +1,9 @@
-// client/src/components/FilterSidebar.jsx
-import React from "react";
-import { X } from "lucide-react";
+import React, { useState } from "react";
 
 const FilterSidebar = ({ filters, categories, brands, onFilterChange }) => {
+  const [minPrice, setMinPrice] = useState(filters.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(filters.maxPrice || "");
+
   const handleFilterChange = (key, value) => {
     onFilterChange({
       ...filters,
@@ -15,10 +16,19 @@ const FilterSidebar = ({ filters, categories, brands, onFilterChange }) => {
       search: "",
       category: "",
       brand: "",
-      availability: "",
+      hasDiscount: false,
       minPrice: "",
       maxPrice: "",
-      sort: "newest",
+    });
+    setMinPrice("");
+    setMaxPrice("");
+  };
+
+  const applyPriceFilter = () => {
+    onFilterChange({
+      ...filters,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
     });
   };
 
@@ -34,82 +44,60 @@ const FilterSidebar = ({ filters, categories, brands, onFilterChange }) => {
         </button>
       </div>
 
-      {/* Categories */}
+      {/* Categories Dropdown */}
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3">Categories</h4>
-        <div className="space-y-2">
+        <select
+          value={filters.category}
+          onChange={(e) => handleFilterChange("category", e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded text-sm"
+        >
+          <option value="">Select Category</option>
           {categories.map((category) => (
-            <div key={category._id} className="flex items-center">
-              <input
-                type="radio"
-                id={`category-${category._id}`}
-                name="category"
-                checked={filters.category === category._id}
-                onChange={() => handleFilterChange("category", category._id)}
-                className="h-4 w-4 text-green-600 focus:ring-green-500"
-              />
-              <label
-                htmlFor={`category-${category._id}`}
-                className="ml-2 text-sm text-gray-700"
-              >
-                {category.name}
-              </label>
-            </div>
+            <option key={category._id} value={category._id}>
+              {category.name}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {/* Brands */}
+      {/* Brands Dropdown */}
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3">Brands</h4>
-        <div className="space-y-2">
+        <select
+          value={filters.brand}
+          onChange={(e) => handleFilterChange("brand", e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded text-sm"
+        >
+          <option value="">Select Brand</option>
           {brands.map((brand) => (
-            <div key={brand._id} className="flex items-center">
-              <input
-                type="radio"
-                id={`brand-${brand._id}`}
-                name="brand"
-                checked={filters.brand === brand._id}
-                onChange={() => handleFilterChange("brand", brand._id)}
-                className="h-4 w-4 text-green-600 focus:ring-green-500"
-              />
-              <label
-                htmlFor={`brand-${brand._id}`}
-                className="ml-2 text-sm text-gray-700"
-              >
-                {brand.name}
-              </label>
-            </div>
+            <option key={brand._id} value={brand._id}>
+              {brand.name}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {/* Availability */}
+      {/* Offers (Has Discount) */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Availability</h4>
-        <div className="space-y-2">
-          {["available", "not available", "not specified"].map((status) => (
-            <div key={status} className="flex items-center">
-              <input
-                type="radio"
-                id={`availability-${status}`}
-                name="availability"
-                checked={filters.availability === status}
-                onChange={() => handleFilterChange("availability", status)}
-                className="h-4 w-4 text-green-600 focus:ring-green-500"
-              />
-              <label
-                htmlFor={`availability-${status}`}
-                className="ml-2 text-sm text-gray-700 capitalize"
-              >
-                {status.replace("-", " ")}
-              </label>
-            </div>
-          ))}
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Offers</h4>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="hasDiscount"
+            checked={filters.hasDiscount}
+            onChange={() =>
+              handleFilterChange("hasDiscount", !filters.hasDiscount)
+            }
+            className="h-4 w-4 text-green-600 focus:ring-green-500"
+          />
+          <label htmlFor="hasDiscount" className="ml-2 text-sm text-gray-700">
+            Show Items with Offers
+          </label>
         </div>
       </div>
 
-      {/* Price Range */}
+      {/* Price Range with Apply Button */}
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3">Price Range</h4>
         <div className="grid grid-cols-2 gap-3">
@@ -123,8 +111,8 @@ const FilterSidebar = ({ filters, categories, brands, onFilterChange }) => {
             <input
               type="number"
               id="minPrice"
-              value={filters.minPrice}
-              onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded text-sm"
               placeholder="0"
             />
@@ -139,28 +127,19 @@ const FilterSidebar = ({ filters, categories, brands, onFilterChange }) => {
             <input
               type="number"
               id="maxPrice"
-              value={filters.maxPrice}
-              onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded text-sm"
               placeholder="100000"
             />
           </div>
         </div>
-      </div>
-
-      {/* Sort By */}
-      <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Sort By</h4>
-        <select
-          value={filters.sort}
-          onChange={(e) => handleFilterChange("sort", e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded text-sm"
+        <button
+          onClick={applyPriceFilter}
+          className="w-full bg-green-600 text-white p-2 mt-4 rounded text-sm"
         >
-          <option value="newest">Newest First</option>
-          <option value="price-low">Price: Low to High</option>
-          <option value="price-high">Price: High to Low</option>
-          <option value="name">Name A-Z</option>
-        </select>
+          Apply Price Filter
+        </button>
       </div>
     </div>
   );

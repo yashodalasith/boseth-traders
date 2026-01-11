@@ -63,7 +63,16 @@ const ProductList = ({ product }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-4 hover-lift">
-      <div className="flex flex-col md:flex-row items-center">
+      <div className="relative flex flex-col md:flex-row items-center">
+        {/* Discount Badge */}
+        {product.hasDiscount && (
+          <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+            {product.discountType === "percentage"
+              ? `${product.discountValue}% OFF`
+              : `Rs. ${product.discountValue} OFF`}
+          </div>
+        )}
+
         <div className="md:w-1/4 mb-4 md:mb-0">
           <img
             src={product.images[0]?.url || "/images/placeholder-product.jpg"}

@@ -1,18 +1,26 @@
 // client/src/pages/Products.jsx
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Grid, List, SlidersHorizontal } from "lucide-react";
+import { Search, Grid, List, SlidersHorizontal } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import ProductList from "../components/ProductList";
 import FilterSidebar from "../components/FilterSidebar";
 import { useItem } from "../context/ItemContext";
 
 const Products = () => {
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Get search query from URL if present
+  const urlSearch = searchParams.get("search") || "";
+
+  // Separate search input state from applied filters
+  const [searchInput, setSearchInput] = useState(urlSearch);
   const [filters, setFilters] = useState({
-    search: "",
+    search: urlSearch,
     category: "",
     brand: "",
     availability: "",
@@ -30,11 +38,25 @@ const Products = () => {
   const [brands, setBrands] = useState([]);
   const { getItems, getCategories, getBrands } = useItem();
 
+  // Only trigger on filters change (not on search input change)
   useEffect(() => {
     loadProducts();
+  }, [filters]);
+
+  // Load categories and brands once on mount
+  useEffect(() => {
     loadCategories();
     loadBrands();
-  }, [filters]);
+  }, []);
+
+  // Update filters when URL search param changes
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    if (urlSearch) {
+      setSearchInput(urlSearch);
+      setFilters((prev) => ({ ...prev, search: urlSearch, page: 1 }));
+    }
+  }, [searchParams]);
 
   const loadProducts = async () => {
     try {
@@ -74,12 +96,28 @@ const Products = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    loadProducts();
+    // Only update filters (triggering the API call) when search is submitted
+    setFilters({ ...filters, search: searchInput, page: 1 });
   };
 
   const handlePageChange = (newPage) => {
     setFilters({ ...filters, page: newPage });
     window.scrollTo(0, 0);
+  };
+
+  const clearAllFilters = () => {
+    setSearchInput("");
+    setFilters({
+      search: "",
+      category: "",
+      brand: "",
+      availability: "",
+      minPrice: "",
+      maxPrice: "",
+      sort: "newest",
+      page: 1,
+      limit: 12,
+    });
   };
 
   return (
@@ -109,10 +147,8 @@ const Products = () => {
               <input
                 type="text"
                 placeholder="Search products by name, model number, or description..."
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters({ ...filters, search: e.target.value })
-                }
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
               <button
@@ -308,19 +344,7 @@ const Products = () => {
                   Try adjusting your filters or search terms
                 </p>
                 <button
-                  onClick={() =>
-                    setFilters({
-                      search: "",
-                      category: "",
-                      brand: "",
-                      availability: "",
-                      minPrice: "",
-                      maxPrice: "",
-                      sort: "newest",
-                      page: 1,
-                      limit: 12,
-                    })
-                  }
+                  onClick={clearAllFilters}
                   className="mt-4 text-green-600 hover:text-green-700 font-medium"
                 >
                   Clear all filters
