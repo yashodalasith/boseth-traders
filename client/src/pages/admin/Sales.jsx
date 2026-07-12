@@ -83,6 +83,7 @@ const AdminSales = () => {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error adding sale:", error);
+      throw error;
     }
   };
 
@@ -99,6 +100,7 @@ const AdminSales = () => {
       loadSales();
     } catch (error) {
       console.error("Error saving sale:", error);
+      throw error;
     }
   };
 

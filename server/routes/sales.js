@@ -40,6 +40,17 @@ const applySalesCountDelta = async (quantityMap, multiplier = 1) => {
   }
 };
 
+// New helper to build a map of itemId -> total quantity from an array of sale line items
+const buildQuantityMapFromResolved = (resolvedItems = []) => {
+  const map = new Map();
+  for (const li of resolvedItems) {
+    if (!li.item) continue;
+    const id = li.item.toString();
+    map.set(id, (map.get(id) || 0) + Number(li.quantity || 0));
+  }
+  return map;
+};
+
 const normalizeAdjustments = (adjustments = []) =>
   (Array.isArray(adjustments) ? adjustments : [])
     .map((entry) => ({
@@ -48,11 +59,13 @@ const normalizeAdjustments = (adjustments = []) =>
     }))
     .filter((entry) => entry.label && entry.value >= 0);
 
-const resolveCustomerData = async (customerInput = {}) => {
+const resolveCustomerData = async (customerInput = {}, session = null) => {
   let linkedUser = null;
 
   if (customerInput.userId) {
-    linkedUser = await User.findById(customerInput.userId);
+    linkedUser = await User.findById(customerInput.userId).session(
+      session || null,
+    );
     if (!linkedUser) {
       throw new Error("Selected customer not found");
     }
@@ -85,7 +98,7 @@ const resolveCustomerData = async (customerInput = {}) => {
   };
 };
 
-const resolveSaleItems = async (lineItems = []) => {
+const resolveSaleItems = async (lineItems = [], session = null) => {
   const resolvedItems = [];
 
   for (const entry of lineItems) {
@@ -94,12 +107,14 @@ const resolveSaleItems = async (lineItems = []) => {
     // Accept either `itemId` (older code) or `item` (frontend uses `item`)
     const candidateId = entry.itemId || entry.item;
     if (candidateId) {
-      linkedItem = await Item.findById(candidateId);
+      linkedItem = await Item.findById(candidateId).session(session || null);
       if (!linkedItem) {
         throw new Error("One or more selected items were not found");
       }
     }
 
+    // Only resolve inventory items by explicit itemId/item.
+    // Manual item names are preserved as non-linked sale lines.
     const itemName = (entry.itemName || linkedItem?.name || "").trim();
     if (!itemName) {
       throw new Error("Each sale line must include an item name");
@@ -144,6 +159,41 @@ const resolveSaleItems = async (lineItems = []) => {
   return resolvedItems;
 };
 
+const adjustItemsByDifference = async (differenceMap, session = null) => {
+  // differenceMap: Map(itemId -> (newQuantity - oldQuantity))
+  for (const [itemId, diff] of differenceMap.entries()) {
+    const item = await Item.findById(itemId).session(session || null);
+    if (!item) {
+      // ignore items that don't exist in the item collection
+      continue;
+    }
+
+    const inventoryDelta = -diff; // positive -> increase stock, negative -> decrease stock
+    const salesDelta = diff; // positive -> increase salesCount, negative -> decrease
+
+    // Validate stock availability when reducing inventory
+    if (inventoryDelta < 0) {
+      const projected = Number(item.quantity || 0) + inventoryDelta;
+      if (projected < 0) {
+        const err = new Error(
+          `Insufficient stock for item '${item.name}' (id=${item._id}). Requested change would make quantity negative.`,
+        );
+        err.code = "INSUFFICIENT_STOCK";
+        err.itemId = String(item._id);
+        err.itemName = String(item.name || "");
+        err.available = Number(item.quantity || 0);
+        err.requested = Math.abs(inventoryDelta);
+        throw err;
+      }
+    }
+
+    item.quantity = Math.max(0, Number(item.quantity || 0) + inventoryDelta);
+    item.salesCount = Math.max(0, Number(item.salesCount || 0) + salesDelta);
+
+    await item.save({ session: session || undefined });
+  }
+};
+
 // Get all sales with optional filtering
 router.get("/", auth, admin, async (req, res) => {
   try {
@@ -173,29 +223,74 @@ router.get("/", auth, admin, async (req, res) => {
 
 // Create new sale entry
 router.post("/", auth, admin, validateSale, async (req, res) => {
+  const session = await mongoose.startSession();
+  let populatedSale = null;
+
   try {
-    const resolvedItems = await resolveSaleItems(req.body.items);
-    const customer = await resolveCustomerData(req.body.customer);
+    await session.withTransaction(async () => {
+      const resolvedItems = await resolveSaleItems(req.body.items, session);
+      const customer = await resolveCustomerData(req.body.customer, session);
 
-    const sale = new Sale({
-      items: resolvedItems,
-      customer,
-      additionalCharges: normalizeAdjustments(req.body.additionalCharges),
-      additionalCosts: normalizeAdjustments(req.body.additionalCosts),
-      dateTime: req.body.dateTime || new Date(),
+      // validate inventory availability against resolved items
+      const quantityMap = buildQuantityMapFromResolved(resolvedItems);
+      for (const [itemId, qty] of quantityMap.entries()) {
+        const item = await Item.findById(itemId).session(session);
+        if (!item) {
+          throw new Error("One or more selected items were not found");
+        }
+        if (Number(item.quantity || 0) < qty) {
+          const err = new Error(
+            `Insufficient stock for item '${item.name}'. Available: ${item.quantity}, requested: ${qty}`,
+          );
+          err.code = "INSUFFICIENT_STOCK";
+          err.itemId = String(item._id);
+          err.itemName = item.name;
+          err.available = Number(item.quantity || 0);
+          err.requested = qty;
+          throw err;
+        }
+      }
+
+      const sale = new Sale({
+        items: resolvedItems,
+        customer,
+        additionalCharges: normalizeAdjustments(req.body.additionalCharges),
+        additionalCosts: normalizeAdjustments(req.body.additionalCosts),
+        dateTime: req.body.dateTime || new Date(),
+      });
+
+      await sale.save({ session });
+
+      // adjust Item.quantity and Item.salesCount atomically
+      await adjustItemsByDifference(quantityMap, session);
+
+      populatedSale = await Sale.findById(sale._id)
+        .populate("items.item", "name modelNumber")
+        .populate("customer.user", "name username email contact address")
+        .session(session);
     });
-
-    await sale.save();
-
-    await applySalesCountDelta(mapItemQuantities(sale.items), 1);
-
-    const populatedSale = await Sale.findById(sale._id)
-      .populate("items.item", "name modelNumber")
-      .populate("customer.user", "name username email contact address");
 
     res.status(201).json(populatedSale);
   } catch (error) {
+    if (res.headersSent) {
+      return;
+    }
+
+    if (error && error.code === "INSUFFICIENT_STOCK") {
+      res.status(422).json({
+        message: error.message,
+        code: error.code,
+        itemId: error.itemId,
+        itemName: error.itemName,
+        available: error.available,
+        requested: error.requested,
+      });
+      return;
+    }
+
     res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
@@ -218,50 +313,122 @@ router.get("/:id", auth, admin, async (req, res) => {
 
 // Update sale
 router.put("/:id", auth, admin, validateSale, async (req, res) => {
+  const session = await mongoose.startSession();
+  let populatedSale = null;
+
   try {
-    const sale = await Sale.findById(req.params.id);
+    await session.withTransaction(async () => {
+      const sale = await Sale.findById(req.params.id).session(session);
+      if (!sale) {
+        throw new Error("Sale not found");
+      }
 
-    if (!sale) {
-      return res.status(404).json({ message: "Sale not found" });
-    }
+      const previousResolved = sale.items || [];
+      const previousMap = buildQuantityMapFromResolved(previousResolved);
 
-    const previousItemQuantities = mapItemQuantities(sale.items);
-    const resolvedItems = await resolveSaleItems(req.body.items);
-    const customer = await resolveCustomerData(req.body.customer);
+      const resolvedItems = await resolveSaleItems(req.body.items, session);
+      const customer = await resolveCustomerData(req.body.customer, session);
 
-    sale.items = resolvedItems;
-    sale.customer = customer;
-    sale.additionalCharges = normalizeAdjustments(req.body.additionalCharges);
-    sale.additionalCosts = normalizeAdjustments(req.body.additionalCosts);
-    sale.dateTime = req.body.dateTime || sale.dateTime;
+      const newMap = buildQuantityMapFromResolved(resolvedItems);
 
-    await sale.save();
+      // compute difference map: new - old
+      const diffMap = new Map();
+      const keys = new Set([
+        ...Array.from(previousMap.keys()),
+        ...Array.from(newMap.keys()),
+      ]);
+      for (const k of keys) {
+        const newQty = newMap.get(k) || 0;
+        const oldQty = previousMap.get(k) || 0;
+        const diff = newQty - oldQty;
+        if (diff !== 0) diffMap.set(k, diff);
+      }
 
-    await applySalesCountDelta(previousItemQuantities, -1);
-    await applySalesCountDelta(mapItemQuantities(sale.items), 1);
+      // validate inventory availability for items that will reduce stock
+      for (const [itemId, diff] of diffMap.entries()) {
+        if (diff > 0) {
+          const item = await Item.findById(itemId).session(session);
+          if (!item)
+            throw new Error("One or more selected items were not found");
+          if (Number(item.quantity || 0) < diff) {
+            const err = new Error(
+              `Insufficient stock for item '${item.name}'. Available: ${item.quantity}, requested: ${diff}`,
+            );
+            err.code = "INSUFFICIENT_STOCK";
+            err.itemId = String(item._id);
+            err.itemName = item.name;
+            err.available = Number(item.quantity || 0);
+            err.requested = diff;
+            throw err;
+          }
+        }
+      }
 
-    const populatedSale = await Sale.findById(sale._id)
-      .populate("items.item", "name modelNumber")
-      .populate("customer.user", "name username email contact address");
+      sale.items = resolvedItems;
+      sale.customer = customer;
+      sale.additionalCharges = normalizeAdjustments(req.body.additionalCharges);
+      sale.additionalCosts = normalizeAdjustments(req.body.additionalCosts);
+      sale.dateTime = req.body.dateTime || sale.dateTime;
+
+      await sale.save({ session });
+
+      // apply differences to Item documents (quantity and salesCount)
+      await adjustItemsByDifference(diffMap, session);
+
+      populatedSale = await Sale.findById(sale._id)
+        .populate("items.item", "name modelNumber")
+        .populate("customer.user", "name username email contact address")
+        .session(session);
+    });
 
     res.json(populatedSale);
   } catch (error) {
+    if (res.headersSent) {
+      return;
+    }
+    if (error && error.code === "INSUFFICIENT_STOCK") {
+      res.status(422).json({
+        message: error.message,
+        code: error.code,
+        itemId: error.itemId,
+        itemName: error.itemName,
+        available: error.available,
+        requested: error.requested,
+      });
+      return;
+    }
     res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
 // Delete sale
 router.delete("/:id", auth, admin, async (req, res) => {
   try {
-    const sale = await Sale.findById(req.params.id);
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      const sale = await Sale.findById(req.params.id).session(session);
+      if (!sale) {
+        throw new Error("Sale not found");
+      }
 
-    if (!sale) {
-      return res.status(404).json({ message: "Sale not found" });
-    }
+      const previousMap = buildQuantityMapFromResolved(sale.items || []);
 
-    await applySalesCountDelta(mapItemQuantities(sale.items), -1);
-    await Sale.findByIdAndDelete(req.params.id);
+      // When deleting a sale, we need to return quantities and reduce salesCount
+      const diffMap = new Map();
+      for (const [itemId, qty] of previousMap.entries()) {
+        // to reverse the sale we decrease salesCount by qty (diff negative),
+        // and increase quantity by qty (inventoryDelta positive)
+        diffMap.set(itemId, -qty);
+      }
 
+      await adjustItemsByDifference(diffMap, session);
+
+      await Sale.findByIdAndDelete(req.params.id).session(session);
+    });
+
+    session.endSession();
     res.json({ message: "Sale deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -27,11 +27,13 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
     emptyAdjustment(),
   ]);
   const [additionalCosts, setAdditionalCosts] = useState([emptyAdjustment()]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [itemSearchTerms, setItemSearchTerms] = useState([]);
   const [itemSearchResults, setItemSearchResults] = useState([]);
-  const [showItemResults, setShowItemResults] = useState(false);
+  const [showItemResults, setShowItemResults] = useState([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [userSearchResults, setUserSearchResults] = useState([]);
   const [showUserResults, setShowUserResults] = useState(false);
+  const [userSearchExecuted, setUserSearchExecuted] = useState(false);
   const [dateTime, setDateTime] = useState(
     new Date().toISOString().slice(0, 16),
   );
@@ -56,7 +58,8 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
       setLines(populatedLines.length ? populatedLines : [emptyLine()]);
 
       setCustomer({
-        userId: initialSale.customer?.user || "",
+        userId:
+          initialSale.customer?.user?._id || initialSale.customer?.user || "",
         name: initialSale.customer?.name || "",
         contact: initialSale.customer?.contact || "",
         address: initialSale.customer?.address || "",
@@ -81,11 +84,13 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
           ? new Date(initialSale.dateTime).toISOString().slice(0, 16)
           : new Date().toISOString().slice(0, 16),
       );
-      setSearchTerm("");
+      setItemSearchTerms([]);
       setItemSearchResults([]);
-      setShowItemResults(false);
+      setShowItemResults([]);
+      setUserSearchQuery("");
       setUserSearchResults([]);
       setShowUserResults(false);
+      setUserSearchExecuted(false);
       setError("");
       return;
     }
@@ -94,57 +99,107 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
     setCustomer(defaultCustomer());
     setAdditionalCharges([emptyAdjustment()]);
     setAdditionalCosts([emptyAdjustment()]);
-    setSearchTerm("");
+    setItemSearchTerms([]);
     setItemSearchResults([]);
-    setShowItemResults(false);
+    setShowItemResults([]);
+    setUserSearchQuery("");
     setUserSearchResults([]);
     setShowUserResults(false);
+    setUserSearchExecuted(false);
     setDateTime(new Date().toISOString().slice(0, 16));
     setError("");
   }, [isOpen, initialSale]);
 
   useEffect(() => {
-    if (!searchTerm) {
-      setItemSearchResults([]);
-      setShowItemResults(false);
+    setItemSearchTerms((prev) =>
+      Array.from({ length: lines.length }, (_, index) => prev[index] || ""),
+    );
+    setItemSearchResults((prev) =>
+      Array.from({ length: lines.length }, (_, index) => prev[index] || []),
+    );
+    setShowItemResults((prev) =>
+      Array.from({ length: lines.length }, (_, index) => prev[index] || false),
+    );
+  }, [lines.length]);
+
+  const searchItems = async (index) => {
+    const query = itemSearchTerms[index]?.trim();
+    if (!query) {
+      setItemSearchResults((prev) => {
+        const next = [...prev];
+        next[index] = [];
+        return next;
+      });
+      setShowItemResults((prev) => {
+        const next = [...prev];
+        next[index] = false;
+        return next;
+      });
       return;
     }
 
-    const timeoutId = window.setTimeout(async () => {
-      try {
-        const results = await getItems({ search: searchTerm, limit: 5 });
-        setItemSearchResults(results.items || results);
-        setShowItemResults(true);
-      } catch (err) {
-        console.error("Error searching items:", err);
-      }
-    }, 250);
+    try {
+      const results = await getItems({ search: query, limit: 5 });
+      setItemSearchResults((prev) => {
+        const next = [...prev];
+        next[index] = results.items || results;
+        return next;
+      });
+      setShowItemResults((prev) => {
+        const next = [...prev];
+        next[index] = true;
+        return next;
+      });
+    } catch (err) {
+      console.error("Error searching items:", err);
+      setItemSearchResults((prev) => {
+        const next = [...prev];
+        next[index] = [];
+        return next;
+      });
+      setShowItemResults((prev) => {
+        const next = [...prev];
+        next[index] = true;
+        return next;
+      });
+    }
+  };
 
-    return () => window.clearTimeout(timeoutId);
-  }, [searchTerm, getItems]);
-
-  useEffect(() => {
-    const searchText = [customer.name, customer.contact, customer.address]
-      .filter(Boolean)
-      .join(" ");
-    if (!searchText.trim()) {
+  const searchUsers = async () => {
+    const query = userSearchQuery.trim();
+    if (!query) {
       setUserSearchResults([]);
       setShowUserResults(false);
+      setUserSearchExecuted(false);
       return;
     }
 
-    const timeoutId = window.setTimeout(async () => {
-      try {
-        const results = await getUsers({ search: searchText, limit: 5 });
-        setUserSearchResults(Array.isArray(results) ? results : []);
-        setShowUserResults(true);
-      } catch (err) {
-        console.error("Error searching users:", err);
-      }
-    }, 250);
+    setUserSearchExecuted(true);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [customer.name, customer.contact, customer.address, getUsers]);
+    try {
+      const results = await getUsers({ search: query, limit: 5 });
+      // support multiple API response shapes: array, { items: [] }, { users: [] }
+      let users = [];
+      if (Array.isArray(results)) {
+        users = results;
+      } else if (results && Array.isArray(results.items)) {
+        users = results.items;
+      } else if (results && Array.isArray(results.users)) {
+        users = results.users;
+      } else if (results && Array.isArray(results.data)) {
+        users = results.data;
+      }
+      // debug log the resolved users and raw response to trace issues
+      console.debug("searchUsers: resolved users:", users, "raw:", results);
+      setUserSearchResults(users);
+      // always open the results container so we can inspect rendering in devtools
+      setShowUserResults(true);
+    } catch (err) {
+      console.error("Error searching users:", err);
+      setUserSearchResults([]);
+      setShowUserResults(false);
+    }
+  };
 
   const totals = useMemo(() => {
     const saleLines = lines.map((line) => ({
@@ -189,12 +244,60 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
     );
   };
 
+  const updateItemSearchTerm = (index, value) => {
+    setItemSearchTerms((prev) => {
+      const next = Array.from(
+        { length: Math.max(prev.length, lines.length) },
+        (_, idx) => prev[idx] || "",
+      );
+      next[index] = value;
+      return next;
+    });
+  };
+
   const handleSelectItem = (item, index) => {
     updateLine(index, "itemId", item._id);
     updateLine(index, "itemName", item.name);
     updateLine(index, "buyingPrice", item.buyingPrice ?? "");
     updateLine(index, "sellingPrice", item.price ?? "");
-    setShowItemResults(false);
+    setItemSearchTerms((prev) => {
+      const next = [...prev];
+      next[index] = item.name;
+      return next;
+    });
+    setItemSearchResults((prev) => {
+      const next = [...prev];
+      next[index] = [];
+      return next;
+    });
+    setShowItemResults((prev) => {
+      const next = [...prev];
+      next[index] = false;
+      return next;
+    });
+  };
+
+  const clearSelectedItem = (index) => {
+    // clear all item-related fields for this line (match customer clear behavior)
+    updateLine(index, "itemId", "");
+    updateLine(index, "itemName", "");
+    updateLine(index, "buyingPrice", "");
+    updateLine(index, "sellingPrice", "");
+    setItemSearchTerms((prev) => {
+      const next = [...prev];
+      next[index] = "";
+      return next;
+    });
+    setItemSearchResults((prev) => {
+      const next = [...prev];
+      next[index] = [];
+      return next;
+    });
+    setShowItemResults((prev) => {
+      const next = [...prev];
+      next[index] = false;
+      return next;
+    });
   };
 
   const addLine = () => setLines((prev) => [...prev, emptyLine()]);
@@ -245,12 +348,17 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
             .join(", ")
         : "",
     });
+    setUserSearchQuery(user.name || "");
+    setUserSearchResults([]);
     setShowUserResults(false);
+    setUserSearchExecuted(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    // clear previous server errors on lines
+    setLines((prev) => prev.map((l) => ({ ...l, serverError: undefined })));
 
     const normalizedLines = lines
       .map((line) => ({
@@ -294,34 +402,72 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
       return;
     }
 
-    onSave({
-      items: normalizedLines.map((line) => ({
-        itemId: line.itemId || undefined,
-        itemName: line.itemName.trim(),
-        buyingPrice: line.buyingPrice === "" ? undefined : line.buyingPrice,
-        sellingPrice: line.sellingPrice,
-        quantity: line.quantity,
-      })),
-      customer: {
-        userId: customer.userId || undefined,
-        name: normalizedCustomer.name,
-        contact: normalizedCustomer.contact,
-        address: normalizedCustomer.address,
-      },
-      additionalCharges: additionalCharges
-        .filter((entry) => entry.label?.trim())
-        .map((entry) => ({
-          label: entry.label.trim(),
-          value: Number(entry.value || 0),
+    try {
+      await onSave({
+        items: normalizedLines.map((line) => ({
+          itemId: line.itemId || undefined,
+          itemName: line.itemName.trim(),
+          buyingPrice: line.buyingPrice === "" ? undefined : line.buyingPrice,
+          sellingPrice: line.sellingPrice,
+          quantity: line.quantity,
         })),
-      additionalCosts: additionalCosts
-        .filter((entry) => entry.label?.trim())
-        .map((entry) => ({
-          label: entry.label.trim(),
-          value: Number(entry.value || 0),
-        })),
-      dateTime,
-    });
+        customer: {
+          userId: customer.userId?._id || customer.userId || undefined,
+          name: normalizedCustomer.name,
+          contact: normalizedCustomer.contact,
+          address: normalizedCustomer.address,
+        },
+        additionalCharges: additionalCharges
+          .filter((entry) => entry.label?.trim())
+          .map((entry) => ({
+            label: entry.label.trim(),
+            value: Number(entry.value || 0),
+          })),
+        additionalCosts: additionalCosts
+          .filter((entry) => entry.label?.trim())
+          .map((entry) => ({
+            label: entry.label.trim(),
+            value: Number(entry.value || 0),
+          })),
+        dateTime,
+      });
+    } catch (err) {
+      // Axios error with structured 422 response
+      const resp = err?.response?.data;
+      if (resp && resp.code === "INSUFFICIENT_STOCK") {
+        setError(resp.message || "Insufficient stock");
+        // mark related line with serverError if possible
+        setLines((prev) =>
+          prev.map((line) => {
+            const matchesId =
+              line.itemId && resp.itemId && line.itemId === resp.itemId;
+            const matchesName =
+              !line.itemId &&
+              resp.itemName &&
+              String(line.itemName || "")
+                .trim()
+                .toLowerCase() ===
+                String(resp.itemName || "")
+                  .trim()
+                  .toLowerCase();
+            if (matchesId || matchesName) {
+              return {
+                ...line,
+                serverError: `Only ${resp.available} available, requested ${resp.requested}`,
+              };
+            }
+            return line;
+          }),
+        );
+        return;
+      }
+
+      // fallback generic error
+      setError(
+        err?.response?.data?.message || err.message || "Error saving sale",
+      );
+      return;
+    }
   };
 
   if (!isOpen) return null;
@@ -388,33 +534,67 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
                       <label className="mb-1 block text-sm font-medium text-gray-700">
                         Item
                       </label>
-                      <input
-                        type="text"
-                        value={line.itemName}
-                        onChange={(event) => {
-                          updateLine(index, "itemName", event.target.value);
-                          setSearchTerm(event.target.value);
-                        }}
-                        placeholder="Type item name or search"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                      />
-                      {showItemResults && itemSearchResults.length > 0 ? (
-                        <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                          {itemSearchResults.map((item) => (
-                            <button
-                              key={item._id}
-                              type="button"
-                              className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-gray-50"
-                              onClick={() => handleSelectItem(item, index)}
-                            >
-                              <span>{item.name}</span>
-                              <span className="text-xs text-gray-500">
-                                {item.modelNumber}
-                              </span>
-                            </button>
-                          ))}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={line.itemName}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            updateLine(index, "itemName", value);
+                            updateLine(index, "itemId", "");
+                            updateItemSearchTerm(index, value);
+                          }}
+                          placeholder="Type item name or search"
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                        />
+                        <div className="mt-2 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => searchItems(index)}
+                            className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                          >
+                            <Search size={14} className="mr-2" />
+                            Search
+                          </button>
+                          {showItemResults[index] &&
+                          itemSearchResults[index]?.length === 0 ? (
+                            <span className="text-sm text-gray-500">
+                              No matching items. You can keep this as a manual
+                              name.
+                            </span>
+                          ) : null}
                         </div>
-                      ) : null}
+                        {line.itemId ? (
+                          <div className="mt-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                            Selected item: {line.itemName}
+                            <button
+                              type="button"
+                              onClick={() => clearSelectedItem(index)}
+                              className="ml-3 rounded-lg border border-green-300 bg-white px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-50"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        ) : null}
+                        {showItemResults[index] &&
+                        itemSearchResults[index]?.length > 0 ? (
+                          <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                            {itemSearchResults[index].map((item) => (
+                              <button
+                                key={item._id}
+                                type="button"
+                                className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-gray-50"
+                                onClick={() => handleSelectItem(item, index)}
+                              >
+                                <span>{item.name}</span>
+                                <span className="text-xs text-gray-500">
+                                  {item.modelNumber}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
 
                     <div>
@@ -465,6 +645,11 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
                       />
                     </div>
                   </div>
+                  {line.serverError ? (
+                    <div className="mt-2 text-sm text-red-600">
+                      {line.serverError}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -478,38 +663,85 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
               </div>
             </div>
 
-            <div className="relative mb-4">
+            <div className="mb-4">
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Search user
               </label>
-              <input
-                type="text"
-                value={customer.name}
-                onChange={(event) =>
-                  setCustomer((prev) => ({ ...prev, name: event.target.value }))
-                }
-                placeholder="Search by name, email, or contact"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              />
-              {showUserResults && userSearchResults.length > 0 ? (
-                <div className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                  {userSearchResults.map((user) => (
-                    <button
-                      key={user._id}
-                      type="button"
-                      className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-gray-50"
-                      onClick={() => handleCustomerSelect(user)}
-                    >
-                      <span>{user.name}</span>
-                      <span className="text-xs text-gray-500">
-                        {user.email}
-                      </span>
-                    </button>
-                  ))}
+              <div className="relative flex gap-2">
+                <input
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={(event) => {
+                    setUserSearchQuery(event.target.value);
+                    setCustomer((prev) => ({
+                      ...prev,
+                      userId: "",
+                    }));
+                    setUserSearchResults([]);
+                    setShowUserResults(false);
+                    setUserSearchExecuted(false);
+                  }}
+                  placeholder="Search by name, email, or contact"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                />
+                <button
+                  type="button"
+                  onClick={searchUsers}
+                  className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  <Search size={14} className="mr-2" />
+                  Search
+                </button>
+
+                {showUserResults && userSearchResults.length > 0 ? (
+                  <div className="absolute left-0 z-20 mt-2 w-full max-w-lg overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                    <div className="max-h-60 overflow-y-auto">
+                      {userSearchResults.map((user) => (
+                        <button
+                          key={user._id}
+                          type="button"
+                          onClick={() => handleCustomerSelect(user)}
+                          className="w-full border-b border-gray-100 px-3 py-3 text-left hover:bg-gray-50 last:border-b-0"
+                        >
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.name}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500 truncate">
+                            {user.email}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              {userSearchExecuted &&
+              userSearchQuery.trim() &&
+              userSearchResults.length === 0 ? (
+                <div className="mt-2 text-sm text-gray-500">
+                  No users found. You can enter customer details manually below.
+                </div>
+              ) : null}
+              {customer.userId ? (
+                <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                  Selected customer: {customer.name} ({customer.contact})
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // clear all customer fields
+                      setCustomer(defaultCustomer());
+                      setUserSearchQuery("");
+                      setUserSearchResults([]);
+                      setShowUserResults(false);
+                      setUserSearchExecuted(false);
+                    }}
+                    className="ml-3 rounded-lg border border-green-300 bg-white px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-50"
+                  >
+                    Change
+                  </button>
                 </div>
               ) : null}
             </div>
-
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">
