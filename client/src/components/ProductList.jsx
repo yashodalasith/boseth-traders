@@ -74,15 +74,15 @@ const ProductList = ({ product }) => {
           </div>
         )}
 
-        <div className="md:w-1/4 mb-4 md:mb-0">
+        <div className="md:w-1/4 mb-4 md:mb-0 md:flex-shrink-0">
           <img
             src={product.images[0]?.url || "/images/placeholder-product.jpg"}
             alt={product.name}
-            className="w-full h-48 object-cover rounded-lg"
+            className="w-full h-40 sm:h-48 md:h-48 lg:h-56 object-cover rounded-lg"
           />
         </div>
 
-        <div className="md:w-3/4 md:pl-6">
+        <div className="md:w-3/4 md:pl-6 min-w-0">
           <h3 className="text-xl font-semibold text-gray-800 mb-2">
             {product.name}
           </h3>
@@ -127,7 +127,7 @@ const ProductList = ({ product }) => {
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center space-x-4">
               {/* Favorite Button */}
               <button

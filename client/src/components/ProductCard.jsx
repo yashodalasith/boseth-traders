@@ -102,7 +102,7 @@ const ProductCard = ({ product }) => {
   return (
     <div
       ref={cardRef}
-      className={`bg-white rounded-xl overflow-hidden shadow-lg hover-lift transform transition-all duration-500 ${
+      className={`bg-white rounded-xl overflow-hidden shadow-lg hover-lift transform transition-all duration-500 min-w-0 ${
         isInView ? "slide-in-up in-view" : "slide-in-up"
       }`}
     >
@@ -110,7 +110,7 @@ const ProductCard = ({ product }) => {
         <img
           src={product.images[0]?.url || "/images/placeholder-product.jpg"}
           alt={product.name}
-          className="w-full h-56 object-cover transition-transform duration-700 hover:scale-110"
+          className="w-full h-44 sm:h-56 md:h-48 lg:h-56 xl:h-60 object-cover transition-transform duration-700 hover:scale-110"
         />
 
         {/* Top-right icons */}
@@ -200,7 +200,7 @@ const ProductCard = ({ product }) => {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <Link
             to={`/product/${product._id}`}
             className="flex items-center text-green-600 hover:text-green-700 font-medium text-sm"

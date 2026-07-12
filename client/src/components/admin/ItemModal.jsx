@@ -299,8 +299,8 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl sm:max-w-5xl max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b sticky top-0 bg-white z-10">
           <h2 className="text-xl font-semibold text-gray-800">
             {item ? "Edit Item" : "Add New Item"}
           </h2>
@@ -312,7 +312,7 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

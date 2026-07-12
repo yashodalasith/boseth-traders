@@ -388,14 +388,14 @@ const Home = () => {
         {/* Floating Elements */}
         <motion.div
           animate={floatingAnimation}
-          className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl"
+          className="absolute top-1/4 left-1/4 w-44 h-44 md:w-64 md:h-64 bg-emerald-400/10 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
             ...floatingAnimation,
             transition: { ...floatingAnimation.transition, delay: 1 },
           }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-green-300/10 rounded-full blur-3xl"
+          className="absolute bottom-1/4 right-1/4 w-56 h-56 md:w-96 md:h-96 bg-green-300/10 rounded-full blur-3xl"
         />
 
         {/* Main Content */}
@@ -420,7 +420,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
                 <span className="text-white">Elevate Your</span>
                 <span className="block bg-gradient-to-r from-emerald-300 via-green-300 to-teal-300 bg-clip-text text-transparent">
                   Living Experience
@@ -752,7 +752,7 @@ const Home = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.5 }}
-                      className="w-full h-[500px] object-cover"
+                      className="w-full h-40 md:h-80 lg:h-[500px] object-cover"
                     />
                   </AnimatePresence>
 

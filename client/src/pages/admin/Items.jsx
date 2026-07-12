@@ -82,19 +82,19 @@ const AdminItems = () => {
       filtered = filtered.filter(
         (item) =>
           item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.modelNumber.toLowerCase().includes(searchTerm.toLowerCase())
+          item.modelNumber.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     if (categoryFilter) {
       filtered = filtered.filter(
-        (item) => item.category && item.category._id === categoryFilter
+        (item) => item.category && item.category._id === categoryFilter,
       );
     }
 
     if (brandFilter) {
       filtered = filtered.filter(
-        (item) => item.brand && item.brand._id === brandFilter
+        (item) => item.brand && item.brand._id === brandFilter,
       );
     }
 
@@ -163,7 +163,7 @@ const AdminItems = () => {
 
       {/* Filters and Actions */}
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
           <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
             <div className="relative flex-1">
               <Search
@@ -175,7 +175,7 @@ const AdminItems = () => {
                 placeholder="Search items by name or model number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent min-w-0"
               />
             </div>
 
@@ -293,8 +293,8 @@ const AdminItems = () => {
                           item.availability === "available"
                             ? "bg-green-100 text-green-800"
                             : item.availability === "not available"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {item.availability}

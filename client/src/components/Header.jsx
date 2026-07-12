@@ -54,36 +54,45 @@ const Header = () => {
       transition={{ duration: 0.45 }}
       className="sticky top-0 z-50 border-b border-emerald-100 bg-white/90 backdrop-blur-md"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src="/images/logo.png"
-              alt="Boseth Traders"
-              className="h-10 w-10 rounded-xl object-contain"
-            />
-            <div>
-              <p className="text-lg font-bold text-gray-900">Boseth Traders</p>
-              <p className="text-xs uppercase tracking-[0.28em] text-emerald-600">
-                Premium Living
-              </p>
-            </div>
-          </Link>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-20 items-center justify-between gap-6">
+          <div className="flex-shrink-0">
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src="/images/logo.png"
+                alt="Boseth Traders"
+                className="h-10 w-10 rounded-xl object-contain"
+              />
+              <div>
+                <p className="text-lg font-bold text-gray-900">
+                  Boseth Traders
+                </p>
+                <p className="text-xs uppercase tracking-[0.28em] text-emerald-600">
+                  Premium Living
+                </p>
+              </div>
+            </Link>{" "}
+          </div>
 
-          <nav className="hidden items-center gap-2 lg:flex">
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.label}
-                to={link.to}
-                className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="hidden lg:flex flex-1 justify-center">
+            <nav className="flex items-center gap-2">
+              {navigationLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
 
-          <div className="hidden flex-1 items-center justify-end gap-4 lg:flex">
-            <form onSubmit={handleSearch} className="relative w-full max-w-md">
+          <div className="hidden lg:flex flex-shrink-0 items-center gap-4">
+            <form
+              onSubmit={handleSearch}
+              className="relative w-72 xl:w-80 2xl:w-96"
+            >
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="search"
@@ -167,7 +176,7 @@ const Header = () => {
           <button
             type="button"
             onClick={() => setIsOpen((current) => !current)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 lg:hidden justify-self-end"
             aria-label="Toggle navigation"
           >
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

@@ -328,8 +328,8 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-screen overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl sm:max-w-5xl max-h-screen overflow-y-auto">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b sticky top-0 bg-white z-10">
           <h2 className="text-xl font-semibold text-gray-800">
             {initialSale ? "Edit Sales Entry" : "Add Sales Entry"}
           </h2>
@@ -342,7 +342,7 @@ const SalesEntryModal = ({ isOpen, onClose, onSave, initialSale }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}

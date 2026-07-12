@@ -320,7 +320,7 @@ const Products = () => {
                           >
                             {page}
                           </button>
-                        )
+                        ),
                       )}
 
                       <button
