@@ -4,10 +4,44 @@ const { upload } = require("../utils/cloudinary");
 const Item = require("../models/Item");
 const Category = require("../models/Category");
 const Brand = require("../models/Brand");
+const Subscriber = require("../models/Subscriber");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 const router = express.Router();
 const { cloudinary } = require("../utils/cloudinary");
+const { sendDiscountNotificationEmail } = require("../utils/email");
+
+const notifyDiscountSubscribers = async (item) => {
+  const subscribers = await Subscriber.find().select("email");
+
+  if (!subscribers.length) {
+    return;
+  }
+
+  const discountLabel =
+    item.discountType === "percentage"
+      ? `${item.discountValue}% off`
+      : `Rs. ${item.discountValue} off`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #10B981;">New Discount Alert</h2>
+      <p>${item.name} is now available with a special discount at Boseth Traders.</p>
+      <p><strong>Offer:</strong> ${discountLabel}</p>
+      <p><strong>Price:</strong> Rs. ${Number(item.price).toLocaleString()}</p>
+    </div>
+  `;
+
+  await Promise.all(
+    subscribers.map((subscriber) =>
+      sendDiscountNotificationEmail({
+        to: subscriber.email,
+        subject: `New discount: ${item.name}`,
+        html,
+      }),
+    ),
+  );
+};
 
 // Get all items with filtering and pagination
 router.get("/", async (req, res) => {
@@ -171,6 +205,10 @@ router.post("/", auth, admin, upload.array("images", 5), async (req, res) => {
     await item.populate("category", "name");
     await item.populate("brand", "name");
 
+    if (item.hasDiscount) {
+      await notifyDiscountSubscribers(item);
+    }
+
     res.status(201).json(item);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -181,6 +219,7 @@ router.post("/", auth, admin, upload.array("images", 5), async (req, res) => {
 router.put("/:id", auth, admin, upload.array("images", 5), async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
+    const previousHasDiscount = item?.hasDiscount;
 
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
@@ -238,6 +277,10 @@ router.put("/:id", auth, admin, upload.array("images", 5), async (req, res) => {
     // Populate category and brand before sending response
     await item.populate("category", "name");
     await item.populate("brand", "name");
+
+    if (!previousHasDiscount && item.hasDiscount) {
+      await notifyDiscountSubscribers(item);
+    }
 
     res.json(item);
   } catch (error) {

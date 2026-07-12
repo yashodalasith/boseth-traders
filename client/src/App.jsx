@@ -3,7 +3,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ItemProvider } from "./context/ItemContext";
-import Navbar from "./components/Navbar";
+import Header from "./components/Header";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -11,6 +11,7 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import AdminItems from "./pages/admin/Items";
 import AdminSales from "./pages/admin/Sales";
@@ -25,13 +26,21 @@ function App() {
     <ItemProvider>
       <AuthProvider>
         <div className="App min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
-          <Navbar />
+          <Header />
           <main>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<Products />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/about" element={<About />} />
+              <Route
+                path="/contact"
+                element={
+                  <PrivateRoute>
+                    <Contact />
+                  </PrivateRoute>
+                }
+              />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route

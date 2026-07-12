@@ -2,7 +2,7 @@
 const nodemailer = require("nodemailer");
 
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: "Gmail",
     auth: {
       user: process.env.EMAIL_USER,
@@ -17,7 +17,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `Boseth Traders <${process.env.EMAIL_USER}>`,
     to: email,
     subject: "Password Reset Request - Boseth Traders",
     html: `
@@ -37,4 +37,16 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendPasswordResetEmail };
+const sendDiscountNotificationEmail = async ({ to, bcc, subject, html }) => {
+  const transporter = createTransporter();
+
+  await transporter.sendMail({
+    from: `Boseth Traders <${process.env.EMAIL_USER}>`,
+    to,
+    bcc,
+    subject,
+    html,
+  });
+};
+
+module.exports = { sendPasswordResetEmail, sendDiscountNotificationEmail };

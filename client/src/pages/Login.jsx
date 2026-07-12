@@ -1,6 +1,6 @@
 // client/src/pages/Login.jsx
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -32,7 +33,7 @@ const Login = () => {
       const result = await login(formData);
 
       if (result.success) {
-        navigate("/");
+        navigate(location.state?.from?.pathname || "/");
       } else {
         setError(result.message);
       }

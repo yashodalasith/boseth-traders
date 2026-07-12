@@ -29,12 +29,15 @@ import {
   Calendar,
   ArrowUp,
   ArrowDown,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
+import api from "../../utils/api";
 
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState("day");
+  const [messageStatusFilter, setMessageStatusFilter] = useState("all");
   const [salesData, setSalesData] = useState([]);
   const [stats, setStats] = useState({
     totalSales: 0,
@@ -44,6 +47,8 @@ const AdminDashboard = () => {
     trendingUp: true,
   });
   const [topProducts, setTopProducts] = useState([]);
+  const [contactMessages, setContactMessages] = useState([]);
+  const [updatingMessageId, setUpdatingMessageId] = useState("");
   const [loading, setLoading] = useState(true);
 
   // Sample data - replace with actual API calls
@@ -95,6 +100,53 @@ const AdminDashboard = () => {
 
     fetchData();
   }, [timeRange]);
+
+  useEffect(() => {
+    const fetchContactMessages = async () => {
+      try {
+        const params =
+          messageStatusFilter === "all"
+            ? {}
+            : { params: { status: messageStatusFilter } };
+        const response = await api.get("/contact-messages", params);
+        setContactMessages(response.data || []);
+      } catch (error) {
+        console.error("Error loading contact messages:", error);
+      }
+    };
+
+    fetchContactMessages();
+  }, [messageStatusFilter]);
+
+  const statusStyles = {
+    new: "bg-amber-100 text-amber-700",
+    pending: "bg-blue-100 text-blue-700",
+    done: "bg-emerald-100 text-emerald-700",
+    "in-progress": "bg-purple-100 text-purple-700",
+    resolved: "bg-slate-100 text-slate-700",
+  };
+
+  const handleStatusChange = async (messageId, status) => {
+    try {
+      setUpdatingMessageId(messageId);
+      const response = await api.patch(
+        `/contact-messages/${messageId}/status`,
+        {
+          status,
+        },
+      );
+
+      setContactMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          message._id === messageId ? response.data : message,
+        ),
+      );
+    } catch (error) {
+      console.error("Error updating contact message status:", error);
+    } finally {
+      setUpdatingMessageId("");
+    }
+  };
 
   const COLORS = ["#10B981", "#3B82F6", "#EF4444", "#8B5CF6", "#F59E0B"];
 
@@ -440,6 +492,117 @@ const AdminDashboard = () => {
             <span className="text-purple-700 font-medium">View Customers</span>
           </Link>
         </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        className="mt-8 bg-white rounded-2xl shadow-lg p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Customer Messages
+            </h3>
+            <p className="text-sm text-gray-600">
+              Latest contact requests submitted from the authenticated contact
+              page.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-emerald-700">
+            <MessageSquare size={18} />
+            <span className="text-sm font-medium">
+              {contactMessages.length} messages
+            </span>
+          </div>
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium text-gray-600">Filter:</span>
+          <select
+            value={messageStatusFilter}
+            onChange={(e) => setMessageStatusFilter(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="all">All statuses</option>
+            <option value="new">New</option>
+            <option value="pending">Pending</option>
+            <option value="done">Done</option>
+            <option value="in-progress">In progress</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+
+        {contactMessages.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px]">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase tracking-wide text-gray-500">
+                  <th className="py-3 pr-4">User</th>
+                  <th className="py-3 pr-4">Subject</th>
+                  <th className="py-3 pr-4">Message</th>
+                  <th className="py-3 pr-4">Status</th>
+                  <th className="py-3 pr-4">Date</th>
+                  <th className="py-3 pr-4">Update</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contactMessages.slice(0, 5).map((message) => (
+                  <tr key={message._id} className="border-b last:border-0">
+                    <td className="py-4 pr-4">
+                      <p className="font-medium text-gray-900">
+                        {message.name || message.user?.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {message.email || message.user?.email}
+                      </p>
+                    </td>
+                    <td className="py-4 pr-4 font-medium text-gray-800">
+                      {message.subject}
+                    </td>
+                    <td className="py-4 pr-4 text-sm text-gray-600">
+                      {message.message}
+                    </td>
+                    <td className="py-4 pr-4">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          statusStyles[message.status] ||
+                          "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {message.status}
+                      </span>
+                    </td>
+                    <td className="py-4 pr-4 text-sm text-gray-500">
+                      {new Date(message.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-4 pr-4">
+                      <select
+                        value={message.status}
+                        onChange={(e) =>
+                          handleStatusChange(message._id, e.target.value)
+                        }
+                        disabled={updatingMessageId === message._id}
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 disabled:opacity-60"
+                      >
+                        <option value="new">New</option>
+                        <option value="pending">Pending</option>
+                        <option value="done">Done</option>
+                        <option value="in-progress">In progress</option>
+                        <option value="resolved">Resolved</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-gray-500">
+            No contact messages yet.
+          </div>
+        )}
       </motion.div>
     </div>
   );

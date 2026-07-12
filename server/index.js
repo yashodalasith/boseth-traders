@@ -14,6 +14,8 @@ const categoryRoutes = require("./routes/categories");
 const brandRoutes = require("./routes/brands");
 const salesRoutes = require("./routes/sales");
 const userRoutes = require("./routes/users");
+const contactMessageRoutes = require("./routes/contactMessages");
+const subscriberRoutes = require("./routes/subscribers");
 const sanitizeMiddleware = require("./middleware/sanitize");
 
 // Initialize express app
@@ -25,7 +27,7 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
-  })
+  }),
 );
 
 // Rate limiting
@@ -57,7 +59,7 @@ app.use(
       "hasDiscount",
       "sort",
     ],
-  })
+  }),
 );
 
 // Initialize passport
@@ -76,6 +78,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/contact-messages", contactMessageRoutes);
+app.use("/api/subscribers", subscriberRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

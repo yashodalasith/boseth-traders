@@ -27,6 +27,7 @@ Before you begin, ensure you have the following installed on your system:
 ## Project Overview
 
 Boseth Traders Client is a modern React-based frontend that provides:
+
 - User authentication (Login, Register, Password Recovery)
 - Product browsing and filtering
 - Product detail pages
@@ -57,6 +58,7 @@ npm install
 ```
 
 This will read the `package.json` file and install:
+
 - **React** - UI library
 - **React Router DOM** - Client-side routing
 - **Axios** - HTTP client for API calls
@@ -84,15 +86,17 @@ Add the following variables to your `.env` file:
 VITE_API_BASE_URL=http://localhost:5000/api
 VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 VITE_FACEBOOK_APP_ID=your_facebook_app_id
+VITE_PAYMENT=false
 ```
 
 **Variable Explanations:**
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `VITE_API_BASE_URL` | Backend API endpoint | `http://localhost:5000/api` |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth Client ID (get from Google Cloud Console) | `xxxxx.apps.googleusercontent.com` |
-| `VITE_FACEBOOK_APP_ID` | Facebook App ID (get from Facebook Developers) | `123456789012345` |
+| Variable                | Description                                                               | Example                            |
+| ----------------------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| `VITE_API_BASE_URL`     | Backend API endpoint                                                      | `http://localhost:5000/api`        |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth Client ID (get from Google Cloud Console)                    | `xxxxx.apps.googleusercontent.com` |
+| `VITE_FACEBOOK_APP_ID`  | Facebook App ID (get from Facebook Developers)                            | `123456789012345`                  |
+| `VITE_PAYMENT`          | Controls cart/add-to-cart UI visibility while checkout is not implemented | `false`                            |
 
 **How to get OAuth Credentials:**
 
@@ -118,6 +122,7 @@ npm run dev
 ```
 
 Expected output:
+
 ```
   VITE v7.1.2  ready in 245 ms
 
@@ -144,6 +149,7 @@ npm run build
 ```
 
 This will:
+
 - Minify and optimize all code
 - Generate optimized bundles
 - Output files to the `dist/` directory
@@ -162,17 +168,20 @@ This serves the production build locally for testing.
 ### Deployment Options
 
 **Deploy to Vercel (Recommended):**
+
 ```bash
 npm install -g vercel
 vercel
 ```
 
 **Deploy to Netlify:**
+
 1. Connect your GitHub repository to Netlify
 2. Set build command: `npm run build`
 3. Set publish directory: `dist`
 
 **Deploy to Traditional Server:**
+
 ```bash
 # Copy dist folder contents to your server
 scp -r dist/* user@server:/var/www/boseth-traders/
@@ -233,6 +242,7 @@ client/
 ## Key Features
 
 ### Authentication
+
 - User registration with email validation
 - Secure login with JWT tokens
 - Google OAuth integration
@@ -241,6 +251,7 @@ client/
 - Automatic logout on token expiration
 
 ### Product Management
+
 - Browse all products with pagination
 - Filter products by category and brand
 - Search functionality
@@ -248,12 +259,14 @@ client/
 - Product image gallery
 
 ### Shopping Cart
+
 - Add/remove items from cart
 - Update quantities
 - Persistent cart (localStorage)
 - Total price calculation
 
 ### Admin Features
+
 - Dashboard with sales analytics
 - Add, edit, delete products
 - Manage inventory
@@ -261,6 +274,7 @@ client/
 - View customer orders
 
 ### User Features
+
 - View order history
 - Update profile information
 - Change password
@@ -269,29 +283,35 @@ client/
 ## Technology Stack
 
 ### Frontend Framework
+
 - **React 19.1** - UI library
 - **Vite 7.1** - Build tool and dev server (⚡ Lightning fast)
 
 ### Routing & State
+
 - **React Router DOM 7.8** - Client-side routing
 - **React Context** - State management
 
 ### Styling
+
 - **Tailwind CSS 3.4** - Utility-first CSS framework
 - **PostCSS 8.5** - CSS transformations
 - **Autoprefixer** - Browser compatibility
 
 ### HTTP & API
+
 - **Axios 1.11** - Promise-based HTTP client
 - Auto request/response interceptors
 - Built-in error handling
 
 ### UI/UX
+
 - **Lucide React** - Icon library (500+ icons)
 - **Framer Motion 12** - Advanced animations
 - **Recharts 3.1** - Data visualization (charts & graphs)
 
 ### Development Tools
+
 - **ESLint 9** - Code quality and style
 - **React Refresh** - Fast refresh during development
 - **Vite Plugin React** - Optimized React support
@@ -301,6 +321,7 @@ client/
 ### Adding a New Page
 
 1. Create component in `src/pages/YourPage.jsx`:
+
 ```jsx
 export default function YourPage() {
   return <div>Your Page Content</div>;
@@ -308,11 +329,12 @@ export default function YourPage() {
 ```
 
 2. Add route in `src/App.jsx`:
+
 ```jsx
-import YourPage from './pages/YourPage';
+import YourPage from "./pages/YourPage";
 
 // Inside your routes
-<Route path="/yourpage" element={<YourPage />} />
+<Route path="/yourpage" element={<YourPage />} />;
 ```
 
 ### Making API Calls
@@ -320,17 +342,17 @@ import YourPage from './pages/YourPage';
 Use the axios instance from `src/utils/api.js`:
 
 ```jsx
-import api from '../utils/api';
+import api from "../utils/api";
 
 // GET request
-const data = await api.get('/items');
+const data = await api.get("/items");
 
 // POST request
-const response = await api.post('/sales', { data });
+const response = await api.post("/sales", { data });
 
 // Error handling
 try {
-  const data = await api.get('/items');
+  const data = await api.get("/items");
 } catch (error) {
   console.error(error.response?.data?.message);
 }
@@ -339,8 +361,8 @@ try {
 ### Using Context
 
 ```jsx
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 function MyComponent() {
   const { user, logout } = useContext(AuthContext);
@@ -351,11 +373,13 @@ function MyComponent() {
 ### Linting Code
 
 Check for code issues:
+
 ```bash
 npm run lint
 ```
 
 Fix linting issues automatically:
+
 ```bash
 npm run lint -- --fix
 ```
@@ -363,7 +387,9 @@ npm run lint -- --fix
 ## Troubleshooting
 
 ### Issue: Port 5173 already in use
+
 **Solution:**
+
 ```bash
 # Kill the process using the port
 # On Windows PowerShell
@@ -374,7 +400,9 @@ lsof -ti:5173 | xargs kill -9
 ```
 
 ### Issue: Modules not found after npm install
+
 **Solution:**
+
 ```bash
 # Clear npm cache and reinstall
 npm cache clean --force
@@ -383,20 +411,26 @@ npm install
 ```
 
 ### Issue: Environment variables not loading
+
 **Solution:**
+
 - Ensure `.env` file is in the root client directory
 - Restart dev server after creating/modifying `.env`
 - Use `VITE_` prefix for all client-side variables
 - Check browser console for undefined values
 
 ### Issue: CORS errors when calling API
+
 **Solution:**
+
 - Verify `VITE_API_BASE_URL` matches backend URL
 - Check backend CORS configuration allows localhost:5173
 - Ensure backend server is running
 
 ### Issue: Styles not applying (Tailwind)
+
 **Solution:**
+
 ```bash
 # Clear Tailwind cache
 rm -rf .tailwind-cache
@@ -404,7 +438,9 @@ npm run dev
 ```
 
 ### Issue: Blank page or white screen
+
 **Solution:**
+
 1. Open DevTools (F12)
 2. Check Console tab for errors
 3. Check Network tab for failed requests
@@ -414,18 +450,20 @@ npm run dev
 ## Performance Tips
 
 1. **Lazy load components:**
+
 ```jsx
-import { lazy, Suspense } from 'react';
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
+import { lazy, Suspense } from "react";
+const HeavyComponent = lazy(() => import("./HeavyComponent"));
 
 <Suspense fallback={<div>Loading...</div>}>
   <HeavyComponent />
-</Suspense>
+</Suspense>;
 ```
 
 2. **Optimize images:** Use WebP format or compress with tools like TinyPNG
 
 3. **Monitor bundle size:**
+
 ```bash
 npm run build
 # Check dist folder size
@@ -444,6 +482,7 @@ npm run build
 ## Support
 
 For issues or questions:
+
 1. Check the troubleshooting section above
 2. Review the project structure
 3. Check browser console for errors

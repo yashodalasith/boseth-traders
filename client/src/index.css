@@ -1,5 +1,117 @@
-/* index.css — CLEANED UP */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --primary-green: #059669;
+  --secondary-green: #10b981;
+  --accent-emerald: #34d399;
+}
+
+/* Custom animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Custom utility classes */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient {
+  animation: gradient 15s ease infinite;
+  background-size: 400% 400%;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+.glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    var(--primary-green),
+    var(--secondary-green)
+  );
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    var(--secondary-green),
+    var(--accent-emerald)
+  );
+}
+
+/* Smooth transitions */
+* {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Focus styles */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: rgba(5, 150, 105, 0.3);
+  color: white;
+}

@@ -3,6 +3,7 @@ import { Heart, ShoppingCart, Eye } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useItem } from "../context/ItemContext";
 import { Link } from "react-router-dom";
+import { isPaymentEnabled } from "../utils/featureFlags";
 
 const ProductList = ({ product }) => {
   const { user } = useAuth();
@@ -99,7 +100,7 @@ const ProductList = ({ product }) => {
                       product.price -
                         (product.discountType === "percentage"
                           ? (product.price * product.discountValue) / 100
-                          : product.discountValue)
+                          : product.discountValue),
                     )}
                   </span>
                   <span className="text-sm text-gray-500 line-through ml-2">
@@ -118,8 +119,8 @@ const ProductList = ({ product }) => {
                 product.availability === "available"
                   ? "bg-green-100 text-green-800"
                   : product.availability === "not available"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-yellow-100 text-yellow-800"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
               }`}
             >
               {product.availability}
@@ -170,9 +171,11 @@ const ProductList = ({ product }) => {
               </Link>
             </div>
 
-            <button className="btn-primary px-4 py-2 rounded-lg text-sm">
-              Add to Cart
-            </button>
+            {isPaymentEnabled && (
+              <button className="btn-primary px-4 py-2 rounded-lg text-sm">
+                Add to Cart
+              </button>
+            )}
           </div>
         </div>
       </div>

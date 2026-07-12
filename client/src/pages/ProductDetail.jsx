@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useItem } from "../context/ItemContext";
+import { isPaymentEnabled } from "../utils/featureFlags";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -86,13 +87,13 @@ const ProductDetail = () => {
 
   const nextImage = () => {
     setCurrentImage((prev) =>
-      prev === product.images.length - 1 ? 0 : prev + 1
+      prev === product.images.length - 1 ? 0 : prev + 1,
     );
   };
 
   const prevImage = () => {
     setCurrentImage((prev) =>
-      prev === 0 ? product.images.length - 1 : prev - 1
+      prev === 0 ? product.images.length - 1 : prev - 1,
     );
   };
 
@@ -225,7 +226,7 @@ const ProductDetail = () => {
                           product.price -
                             (product.discountType === "percentage"
                               ? (product.price * product.discountValue) / 100
-                              : product.discountValue)
+                              : product.discountValue),
                         )}
                       </span>
                       <span className="text-xl text-gray-500 line-through ml-2">
@@ -249,8 +250,8 @@ const ProductDetail = () => {
                       product.availability === "available"
                         ? "bg-green-100 text-green-800"
                         : product.availability === "not available"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
                     {product.availability}
@@ -263,7 +264,7 @@ const ProductDetail = () => {
                 {product &&
                   (() => {
                     const validFeatures = product.features?.filter(
-                      (f) => f.key?.trim() && f.value?.trim()
+                      (f) => f.key?.trim() && f.value?.trim(),
                     );
 
                     return validFeatures && validFeatures.length > 0 ? (
@@ -320,7 +321,7 @@ const ProductDetail = () => {
 
                         if (!isNaN(val)) {
                           setQuantity(
-                            Math.max(1, Math.min(val, product.quantity))
+                            Math.max(1, Math.min(val, product.quantity)),
                           );
                         }
                       }}
@@ -383,18 +384,20 @@ const ProductDetail = () => {
                   </button>
                 </div>
 
-                <button
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={
-                    product.availability !== "available" ||
-                    quantity > product.quantity ||
-                    quantity <= 0
-                  }
-                >
-                  {product.availability === "available"
-                    ? "Add to Cart"
-                    : "Out of Stock"}
-                </button>
+                {isPaymentEnabled && (
+                  <button
+                    className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={
+                      product.availability !== "available" ||
+                      quantity > product.quantity ||
+                      quantity <= 0
+                    }
+                  >
+                    {product.availability === "available"
+                      ? "Add to Cart"
+                      : "Out of Stock"}
+                  </button>
+                )}
               </div>
             </div>
 

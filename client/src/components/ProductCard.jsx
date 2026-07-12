@@ -5,6 +5,7 @@ import { Heart, ShoppingCart, Eye } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useItem } from "../context/ItemContext";
 import { Link } from "react-router-dom";
+import { isPaymentEnabled } from "../utils/featureFlags";
 
 const ProductCard = ({ product }) => {
   const [isInView, setIsInView] = useState(false);
@@ -45,7 +46,7 @@ const ProductCard = ({ product }) => {
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
 
     if (cardRef.current) {
@@ -171,7 +172,7 @@ const ProductCard = ({ product }) => {
                     product.price -
                       (product.discountType === "percentage"
                         ? (product.price * product.discountValue) / 100
-                        : product.discountValue)
+                        : product.discountValue),
                   )}
                 </span>
                 <span className="text-sm text-gray-500 line-through ml-2">
@@ -190,8 +191,8 @@ const ProductCard = ({ product }) => {
               product.availability === "available"
                 ? "bg-green-100 text-green-800"
                 : product.availability === "not available"
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-yellow-100 text-yellow-800"
             }`}
           >
             {product.availability}
@@ -208,9 +209,11 @@ const ProductCard = ({ product }) => {
             View Details
           </Link>
 
-          <button className="btn-primary px-4 py-2 rounded-lg text-white font-medium text-sm">
-            Add to Cart
-          </button>
+          {isPaymentEnabled && (
+            <button className="btn-primary px-4 py-2 rounded-lg text-white font-medium text-sm">
+              Add to Cart
+            </button>
+          )}
         </div>
       </div>
     </div>

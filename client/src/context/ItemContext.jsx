@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import api from "../utils/api";
 
 const ItemContext = createContext();
@@ -18,7 +24,7 @@ export const ItemProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
 
-  const getItems = async (filters = {}) => {
+  const getItems = useCallback(async (filters = {}) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -37,9 +43,9 @@ export const ItemProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getItem = async (id) => {
+  const getItem = useCallback(async (id) => {
     try {
       setLoading(true);
       const response = await api.get(`/items/${id}`);
@@ -50,9 +56,9 @@ export const ItemProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createItem = async (itemData) => {
+  const createItem = useCallback(async (itemData) => {
     try {
       setLoading(true);
       const response = await api.post("/items", itemData, {
@@ -67,9 +73,9 @@ export const ItemProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateItem = async (id, itemData) => {
+  const updateItem = useCallback(async (id, itemData) => {
     try {
       setLoading(true);
       const response = await api.put(`/items/${id}`, itemData, {
@@ -84,9 +90,9 @@ export const ItemProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const deleteItem = async (id) => {
+  const deleteItem = useCallback(async (id) => {
     try {
       setLoading(true);
       const response = await api.delete(`/items/${id}`);
@@ -97,9 +103,9 @@ export const ItemProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getCategories = async () => {
+  const getCategories = useCallback(async () => {
     try {
       const response = await api.get("/categories");
       setCategories(response.data);
@@ -108,42 +114,54 @@ export const ItemProvider = ({ children }) => {
       console.error("Error fetching categories:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const createCategory = async (categoryData) => {
-    try {
-      const response = await api.post("/categories", categoryData);
-      await getCategories();
-      return response.data;
-    } catch (error) {
-      console.error("Error creating category:", error);
-      throw error;
-    }
-  };
+  const createCategory = useCallback(
+    async (categoryData) => {
+      try {
+        const response = await api.post("/categories", categoryData);
+        await getCategories();
+        return response.data;
+      } catch (error) {
+        console.error("Error creating category:", error);
+        throw error;
+      }
+    },
+    [getCategories],
+  );
 
-  const updateCategory = async (categoryId, categoryData) => {
-    try {
-      const response = await api.put(`/categories/${categoryId}`, categoryData);
-      await getCategories();
-      return response.data;
-    } catch (error) {
-      console.error("Error updating category:", error);
-      throw error;
-    }
-  };
+  const updateCategory = useCallback(
+    async (categoryId, categoryData) => {
+      try {
+        const response = await api.put(
+          `/categories/${categoryId}`,
+          categoryData,
+        );
+        await getCategories();
+        return response.data;
+      } catch (error) {
+        console.error("Error updating category:", error);
+        throw error;
+      }
+    },
+    [getCategories],
+  );
 
-  const deleteCategory = async (categoryId) => {
-    try {
-      const response = await api.delete(`/categories/${categoryId}`);
-      await getCategories();
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      throw error;
-    }
-  };
+  const deleteCategory = useCallback(
+    async (categoryId) => {
+      try {
+        const response = await api.delete(`/categories/${categoryId}`);
+        await getCategories();
+        return response.data;
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        throw error;
+      }
+    },
+    [getCategories],
+  );
 
-  const getBrands = async () => {
+  const getBrands = useCallback(async () => {
     try {
       const response = await api.get("/brands");
       setBrands(response.data);
@@ -152,42 +170,51 @@ export const ItemProvider = ({ children }) => {
       console.error("Error fetching brands:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const createBrand = async (brandData) => {
-    try {
-      const response = await api.post("/brands", brandData);
-      await getBrands();
-      return response.data;
-    } catch (error) {
-      console.error("Error creating brand:", error);
-      throw error;
-    }
-  };
+  const createBrand = useCallback(
+    async (brandData) => {
+      try {
+        const response = await api.post("/brands", brandData);
+        await getBrands();
+        return response.data;
+      } catch (error) {
+        console.error("Error creating brand:", error);
+        throw error;
+      }
+    },
+    [getBrands],
+  );
 
-  const updateBrand = async (brandId, brandData) => {
-    try {
-      const response = await api.put(`/brands/${brandId}`, brandData);
-      await getBrands();
-      return response.data;
-    } catch (error) {
-      console.error("Error updating brand:", error);
-      throw error;
-    }
-  };
+  const updateBrand = useCallback(
+    async (brandId, brandData) => {
+      try {
+        const response = await api.put(`/brands/${brandId}`, brandData);
+        await getBrands();
+        return response.data;
+      } catch (error) {
+        console.error("Error updating brand:", error);
+        throw error;
+      }
+    },
+    [getBrands],
+  );
 
-  const deleteBrand = async (brandId) => {
-    try {
-      const response = await api.delete(`/brands/${brandId}`);
-      await getBrands();
-      return response.data;
-    } catch (error) {
-      console.error("Error deleting brand:", error);
-      throw error;
-    }
-  };
+  const deleteBrand = useCallback(
+    async (brandId) => {
+      try {
+        const response = await api.delete(`/brands/${brandId}`);
+        await getBrands();
+        return response.data;
+      } catch (error) {
+        console.error("Error deleting brand:", error);
+        throw error;
+      }
+    },
+    [getBrands],
+  );
 
-  const getSales = async () => {
+  const getSales = useCallback(async () => {
     try {
       const response = await api.get("/sales");
       return response.data;
@@ -195,9 +222,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error fetching sales:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const addSale = async (saleData) => {
+  const addSale = useCallback(async (saleData) => {
     try {
       const response = await api.post("/sales", saleData);
       return response.data;
@@ -205,9 +232,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error adding sale:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const addToFavorites = async (itemId) => {
+  const addToFavorites = useCallback(async (itemId) => {
     try {
       const response = await api.post(`/users/me/favorites/${itemId}`);
       getFavorites(); // Refresh favorites after addition
@@ -216,9 +243,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error adding to favorites:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const removeFromFavorites = async (itemId) => {
+  const removeFromFavorites = useCallback(async (itemId) => {
     try {
       const response = await api.delete(`/users/me/favorites/${itemId}`);
       getFavorites(); // Refresh favorites after removal
@@ -227,9 +254,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error removing from favorites:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const addToWishlist = async (itemId) => {
+  const addToWishlist = useCallback(async (itemId) => {
     try {
       const response = await api.post(`/users/me/wishlist/${itemId}`);
       getWishlist(); // Refresh wishlist after addition
@@ -238,9 +265,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error adding to wishlist:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const removeFromWishlist = async (itemId) => {
+  const removeFromWishlist = useCallback(async (itemId) => {
     try {
       const response = await api.delete(`/users/me/wishlist/${itemId}`);
       getWishlist(); // Refresh wishlist after removal
@@ -249,9 +276,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error removing from wishlist:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const getFeaturedProducts = async () => {
+  const getFeaturedProducts = useCallback(async () => {
     try {
       const response = await api.get("/items?limit=8&sort=-createdAt");
       return response.data.items || response.data;
@@ -259,9 +286,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error fetching featured products:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const getFavorites = async () => {
+  const getFavorites = useCallback(async () => {
     try {
       const response = await api.get("/users/me/favorites");
       const favoriteIds = response.data.map((item) => item._id); // 🟢 Only IDs
@@ -271,9 +298,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error fetching favorites:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const getWishlist = async () => {
+  const getWishlist = useCallback(async () => {
     try {
       const response = await api.get("/users/me/wishlist");
       const wishlistIds = response.data.map((item) => item._id); // 🟢 Only IDs
@@ -283,9 +310,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error fetching wishlist:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const updateSale = async (saleId, saleData) => {
+  const updateSale = useCallback(async (saleId, saleData) => {
     try {
       const response = await api.put(`/sales/${saleId}`, saleData);
       return response.data;
@@ -293,9 +320,9 @@ export const ItemProvider = ({ children }) => {
       console.error("Error updating sale:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const deleteSale = async (saleId) => {
+  const deleteSale = useCallback(async (saleId) => {
     try {
       const response = await api.delete(`/sales/${saleId}`);
       return response.data;
@@ -303,41 +330,74 @@ export const ItemProvider = ({ children }) => {
       console.error("Error deleting sale:", error);
       throw error;
     }
-  };
+  }, []);
 
-  const value = {
-    loading,
-    categories,
-    brands,
-    getItems,
-    getItem,
-    createItem,
-    updateItem,
-    deleteItem,
-    getCategories,
-    getBrands,
-    getSales,
-    addSale,
-    updateSale,
-    deleteSale,
-    addToFavorites,
-    removeFromFavorites,
-    addToWishlist,
-    removeFromWishlist,
-    getFavorites,
-    getWishlist,
-    getFeaturedProducts,
-    userFavorites,
-    userWishlist,
-    setUserFavorites, // optional: only needed if components will update them manually
-    setUserWishlist,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    createBrand,
-    updateBrand,
-    deleteBrand,
-  };
+  const value = useMemo(
+    () => ({
+      loading,
+      categories,
+      brands,
+      getItems,
+      getItem,
+      createItem,
+      updateItem,
+      deleteItem,
+      getCategories,
+      getBrands,
+      getSales,
+      addSale,
+      updateSale,
+      deleteSale,
+      addToFavorites,
+      removeFromFavorites,
+      addToWishlist,
+      removeFromWishlist,
+      getFavorites,
+      getWishlist,
+      getFeaturedProducts,
+      userFavorites,
+      userWishlist,
+      setUserFavorites,
+      setUserWishlist,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+      createBrand,
+      updateBrand,
+      deleteBrand,
+    }),
+    [
+      loading,
+      categories,
+      brands,
+      getItems,
+      getItem,
+      createItem,
+      updateItem,
+      deleteItem,
+      getCategories,
+      getBrands,
+      getSales,
+      addSale,
+      updateSale,
+      deleteSale,
+      addToFavorites,
+      removeFromFavorites,
+      addToWishlist,
+      removeFromWishlist,
+      getFavorites,
+      getWishlist,
+      getFeaturedProducts,
+      userFavorites,
+      userWishlist,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+      createBrand,
+      updateBrand,
+      deleteBrand,
+    ],
+  );
 
   return <ItemContext.Provider value={value}>{children}</ItemContext.Provider>;
 };
