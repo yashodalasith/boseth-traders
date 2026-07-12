@@ -30,6 +30,7 @@ import {
   ArrowUp,
   ArrowDown,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
@@ -41,64 +42,86 @@ const AdminDashboard = () => {
   const [salesData, setSalesData] = useState([]);
   const [stats, setStats] = useState({
     totalSales: 0,
+    totalRevenue: 0,
     totalProfit: 0,
     totalCustomers: 0,
     totalProducts: 0,
+    salesGrowth: 0,
     trendingUp: true,
   });
   const [topProducts, setTopProducts] = useState([]);
   const [contactMessages, setContactMessages] = useState([]);
   const [updatingMessageId, setUpdatingMessageId] = useState("");
+  const [deletingMessageId, setDeletingMessageId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState("");
 
-  // Sample data - replace with actual API calls
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true);
+      setAnalyticsError("");
 
-      // Simulate API call
-      setTimeout(() => {
-        // Sample hourly sales data
-        const hourlyData = [
-          { hour: "8 AM", sales: 12, profit: 24000 },
-          { hour: "9 AM", sales: 19, profit: 38000 },
-          { hour: "10 AM", sales: 15, profit: 30000 },
-          { hour: "11 AM", sales: 21, profit: 42000 },
-          { hour: "12 PM", sales: 25, profit: 50000 },
-          { hour: "1 PM", sales: 18, profit: 36000 },
-          { hour: "2 PM", sales: 16, profit: 32000 },
-          { hour: "3 PM", sales: 22, profit: 44000 },
-          { hour: "4 PM", sales: 28, profit: 56000 },
-          { hour: "5 PM", sales: 24, profit: 48000 },
-          { hour: "6 PM", sales: 19, profit: 38000 },
-          { hour: "7 PM", sales: 14, profit: 28000 },
-        ];
+      try {
+        const [summaryResponse, hourlyResponse, topProductsResponse] =
+          await Promise.all([
+            api.get("/sales/analytics/summary", {
+              params: { range: timeRange },
+            }),
+            api.get("/sales/analytics/hourly", {
+              params: { range: timeRange },
+            }),
+            api.get("/sales/analytics/top-products", {
+              params: { range: timeRange },
+            }),
+          ]);
 
-        setSalesData(hourlyData);
-
-        // Sample stats
+        const summary = summaryResponse.data || {};
         setStats({
-          totalSales: 233,
-          totalProfit: 466000,
-          totalCustomers: 156,
-          totalProducts: 89,
-          trendingUp: true,
+          totalSales: Number(summary.totalSales || 0),
+          totalRevenue: Number(summary.totalRevenue || 0),
+          totalProfit: Number(summary.totalProfit || 0),
+          totalCustomers: Number(summary.totalCustomers || 0),
+          totalProducts: Number(summary.totalProducts || 0),
+          salesGrowth: Number(summary.salesGrowth || 0),
+          trendingUp: summary.trendingUp !== false,
         });
 
-        // Sample top products
-        setTopProducts([
-          { name: 'Samsung TV 55"', favorites: 45, wishlists: 32, sales: 28 },
-          { name: "iPhone 14 Pro", favorites: 38, wishlists: 29, sales: 25 },
-          { name: "LG Refrigerator", favorites: 32, wishlists: 24, sales: 21 },
-          { name: "Sony Headphones", favorites: 28, wishlists: 19, sales: 18 },
-          { name: "Kitchen Mixer", favorites: 24, wishlists: 17, sales: 15 },
-        ]);
+        const chartData = Array.isArray(hourlyResponse.data)
+          ? hourlyResponse.data.map((entry) => ({
+              label: entry.label || entry.hour || "",
+              sales: Number(entry.sales || 0),
+              revenue: Number(entry.revenue || 0),
+            }))
+          : [];
 
+        setSalesData(chartData);
+        setTopProducts(
+          Array.isArray(topProductsResponse.data)
+            ? topProductsResponse.data
+            : [],
+        );
+      } catch (error) {
+        console.error("Error loading dashboard analytics:", error);
+        setSalesData([]);
+        setTopProducts([]);
+        setStats({
+          totalSales: 0,
+          totalRevenue: 0,
+          totalProfit: 0,
+          totalCustomers: 0,
+          totalProducts: 0,
+          salesGrowth: 0,
+          trendingUp: true,
+        });
+        setAnalyticsError(
+          "Unable to load analytics right now. Please try again later.",
+        );
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, [timeRange]);
 
   useEffect(() => {
@@ -148,7 +171,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    if (
+      !window.confirm(
+        "Delete this completed customer message? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingMessageId(messageId);
+      await api.delete(`/contact-messages/${messageId}`);
+      setContactMessages((currentMessages) =>
+        currentMessages.filter((message) => message._id !== messageId),
+      );
+    } catch (error) {
+      console.error("Error deleting contact message:", error);
+    } finally {
+      setDeletingMessageId("");
+    }
+  };
+
   const COLORS = ["#10B981", "#3B82F6", "#EF4444", "#8B5CF6", "#F59E0B"];
+
+  const formatCurrency = (value) =>
+    `Rs. ${Number(value || 0).toLocaleString()}`;
 
   if (loading) {
     return (
@@ -193,10 +241,6 @@ const AdminDashboard = () => {
               <option value="month">This Month</option>
               <option value="year">This Year</option>
             </select>
-            <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-              <Calendar size={18} className="inline mr-2" />
-              Date Picker
-            </button>
           </div>
         </div>
       </div>
@@ -225,7 +269,9 @@ const AdminDashboard = () => {
                 ) : (
                   <ArrowDown size={16} />
                 )}
-                <span className="ml-1 text-sm">12% from yesterday</span>
+                <span className="ml-1 text-sm">
+                  {Math.abs(stats.salesGrowth).toFixed(0)}% vs previous period
+                </span>
               </div>
             </div>
             <div className="bg-green-100 p-3 rounded-full">
@@ -244,7 +290,7 @@ const AdminDashboard = () => {
             <div>
               <p className="text-gray-600">Total Profit</p>
               <h3 className="text-2xl font-bold text-gray-800">
-                Rs. {stats.totalProfit.toLocaleString()}
+                {formatCurrency(stats.totalProfit)}
               </h3>
               <div
                 className={`flex items-center mt-2 ${
@@ -256,7 +302,9 @@ const AdminDashboard = () => {
                 ) : (
                   <ArrowDown size={16} />
                 )}
-                <span className="ml-1 text-sm">8% from yesterday</span>
+                <span className="ml-1 text-sm">
+                  {formatCurrency(stats.totalRevenue)} revenue
+                </span>
               </div>
             </div>
             <div className="bg-blue-100 p-3 rounded-full">
@@ -287,7 +335,9 @@ const AdminDashboard = () => {
                 ) : (
                   <ArrowDown size={16} />
                 )}
-                <span className="ml-1 text-sm">5% from yesterday</span>
+                <span className="ml-1 text-sm">
+                  {stats.totalCustomers} registered users
+                </span>
               </div>
             </div>
             <div className="bg-purple-100 p-3 rounded-full">
@@ -318,7 +368,9 @@ const AdminDashboard = () => {
                 ) : (
                   <ArrowDown size={16} />
                 )}
-                <span className="ml-1 text-sm">2 new today</span>
+                <span className="ml-1 text-sm">
+                  {stats.totalProducts} items in inventory
+                </span>
               </div>
             </div>
             <div className="bg-orange-100 p-3 rounded-full">
@@ -327,6 +379,12 @@ const AdminDashboard = () => {
           </div>
         </motion.div>
       </div>
+
+      {analyticsError ? (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {analyticsError}
+        </div>
+      ) : null}
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -341,28 +399,34 @@ const AdminDashboard = () => {
             Hourly Sales Performance
           </h3>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="#10B981"
-                  fill="#A7F3D0"
-                  name="Sales"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="profit"
-                  stroke="#3B82F6"
-                  fill="#BFDBFE"
-                  name="Profit (Rs.)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {salesData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={salesData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="label" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#10B981"
+                    fill="#A7F3D0"
+                    name="Sales count"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#3B82F6"
+                    fill="#BFDBFE"
+                    name="Revenue (Rs.)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-200 text-sm text-gray-500">
+                No sales activity recorded for this period yet.
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -377,18 +441,24 @@ const AdminDashboard = () => {
             Top Performing Products
           </h3>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topProducts}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="favorites" fill="#10B981" name="Favorites" />
-                <Bar dataKey="wishlists" fill="#3B82F6" name="Wishlists" />
-                <Bar dataKey="sales" fill="#8B5CF6" name="Sales" />
-              </BarChart>
-            </ResponsiveContainer>
+            {topProducts.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topProducts}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="favorites" fill="#10B981" name="Favorites" />
+                  <Bar dataKey="wishlists" fill="#3B82F6" name="Wishlists" />
+                  <Bar dataKey="sales" fill="#8B5CF6" name="Sales" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-gray-200 text-sm text-gray-500">
+                No top-selling products available for this period.
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -406,55 +476,66 @@ const AdminDashboard = () => {
           </h3>
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">Period:</span>
-            <select className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500">
-              <option>Today</option>
-              <option>This Week</option>
-              <option>This Month</option>
-              <option>This Year</option>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+            >
+              <option value="day">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
             </select>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-3 px-4">Product</th>
-                <th className="text-center py-3 px-4">
-                  <Heart size={18} className="inline text-red-500 mr-1" />
-                  Favorites
-                </th>
-                <th className="text-center py-3 px-4">
-                  <Star size={18} className="inline text-yellow-500 mr-1" />
-                  Wishlists
-                </th>
-                <th className="text-center py-3 px-4">
-                  <ShoppingBag
-                    size={18}
-                    className="inline text-green-500 mr-1"
-                  />
-                  Sales
-                </th>
-                <th className="text-right py-3 px-4">Trend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topProducts.map((product, index) => (
-                <tr key={index} className="border-b hover:bg-green-50">
-                  <td className="py-3 px-4 font-medium">{product.name}</td>
-                  <td className="text-center py-3 px-4">{product.favorites}</td>
-                  <td className="text-center py-3 px-4">{product.wishlists}</td>
-                  <td className="text-center py-3 px-4">{product.sales}</td>
-                  <td className="text-right py-3 px-4">
-                    <div className="inline-flex items-center text-green-600">
-                      <TrendingUp size={16} className="mr-1" />
-                      <span>+12%</span>
-                    </div>
-                  </td>
+          {topProducts.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4">Product</th>
+                  <th className="text-center py-3 px-4">
+                    <Heart size={18} className="inline text-red-500 mr-1" />
+                    Favorites
+                  </th>
+                  <th className="text-center py-3 px-4">
+                    <Star size={18} className="inline text-yellow-500 mr-1" />
+                    Wishlists
+                  </th>
+                  <th className="text-center py-3 px-4">
+                    <ShoppingBag
+                      size={18}
+                      className="inline text-green-500 mr-1"
+                    />
+                    Sales
+                  </th>
+                  <th className="text-right py-3 px-4">Revenue</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {topProducts.map((product, index) => (
+                  <tr key={index} className="border-b hover:bg-green-50">
+                    <td className="py-3 px-4 font-medium">{product.name}</td>
+                    <td className="text-center py-3 px-4">
+                      {product.favorites}
+                    </td>
+                    <td className="text-center py-3 px-4">
+                      {product.wishlists}
+                    </td>
+                    <td className="text-center py-3 px-4">{product.sales}</td>
+                    <td className="text-right py-3 px-4">
+                      {formatCurrency(product.revenue || 0)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center text-gray-500">
+              No product activity yet for this period.
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -485,7 +566,7 @@ const AdminDashboard = () => {
           </Link>
 
           <Link
-            to="/customers"
+            to="/admin/customers"
             className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-purple-300 rounded-xl hover:bg-purple-50 transition-colors"
           >
             <Users size={32} className="text-purple-600 mb-2" />
@@ -545,6 +626,7 @@ const AdminDashboard = () => {
                   <th className="py-3 pr-4">Status</th>
                   <th className="py-3 pr-4">Date</th>
                   <th className="py-3 pr-4">Update</th>
+                  <th className="py-3 pr-4">Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -592,6 +674,21 @@ const AdminDashboard = () => {
                         <option value="in-progress">In progress</option>
                         <option value="resolved">Resolved</option>
                       </select>
+                    </td>
+                    <td className="py-4 pr-4">
+                      {["done", "resolved"].includes(message.status) ? (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMessage(message._id)}
+                          disabled={deletingMessageId === message._id}
+                          className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      ) : (
+                        <span className="text-sm text-gray-400">Locked</span>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -17,6 +17,7 @@ const userRoutes = require("./routes/users");
 const contactMessageRoutes = require("./routes/contactMessages");
 const subscriberRoutes = require("./routes/subscribers");
 const sanitizeMiddleware = require("./middleware/sanitize");
+const { startAdminMessageScheduler } = require("./utils/adminMessageScheduler");
 
 // Initialize express app
 const app = express();
@@ -68,7 +69,10 @@ app.use(passport.initialize());
 // MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB connected successfully"))
+  .then(() => {
+    console.log("MongoDB connected successfully");
+    startAdminMessageScheduler();
+  })
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes

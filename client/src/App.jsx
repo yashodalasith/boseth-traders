@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import AdminItems from "./pages/admin/Items";
 import AdminSales from "./pages/admin/Sales";
+import AdminCustomers from "./pages/admin/Customers";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -77,6 +78,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <AdminSales />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/customers"
+                element={
+                  <AdminRoute>
+                    <AdminCustomers />
                   </AdminRoute>
                 }
               />

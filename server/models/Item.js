@@ -23,6 +23,10 @@ const itemSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    buyingPrice: {
+      type: Number,
+      min: 0,
+    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -88,7 +92,7 @@ const itemSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Item", itemSchema);

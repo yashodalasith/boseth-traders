@@ -224,6 +224,24 @@ export const ItemProvider = ({ children }) => {
     }
   }, []);
 
+  const getUsers = useCallback(async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+
+      Object.keys(filters).forEach((key) => {
+        if (filters[key]) {
+          params.append(key, filters[key]);
+        }
+      });
+
+      const response = await api.get(`/users?${params}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
+  }, []);
+
   const addSale = useCallback(async (saleData) => {
     try {
       const response = await api.post("/sales", saleData);
@@ -345,6 +363,7 @@ export const ItemProvider = ({ children }) => {
       getCategories,
       getBrands,
       getSales,
+      getUsers,
       addSale,
       updateSale,
       deleteSale,
@@ -378,6 +397,7 @@ export const ItemProvider = ({ children }) => {
       getCategories,
       getBrands,
       getSales,
+      getUsers,
       addSale,
       updateSale,
       deleteSale,

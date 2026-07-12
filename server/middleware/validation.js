@@ -34,7 +34,7 @@ const validateRegistration = [
     .withMessage("Password must be at least 6 characters long")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage(
-      "Password must contain at least one lowercase letter, one uppercase letter, and one number"
+      "Password must contain at least one lowercase letter, one uppercase letter, and one number",
     ),
   handleValidationErrors,
 ];
@@ -66,6 +66,10 @@ const validateItem = [
   body("price")
     .isFloat({ min: 0 })
     .withMessage("Price must be a positive number"),
+  body("buyingPrice")
+    .optional({ nullable: true, checkFalsy: true })
+    .isFloat({ min: 0 })
+    .withMessage("Buying price must be a positive number"),
   body("category").trim().notEmpty().withMessage("Category is required"),
   body("brand").trim().notEmpty().withMessage("Brand is required"),
   body("availability")
@@ -91,18 +95,70 @@ const validateItem = [
 
 // Sales entry validation
 const validateSale = [
-  body("itemId").optional().isMongoId().withMessage("Invalid item ID"),
-  body("itemName")
+  body("items")
+    .isArray({ min: 1 })
+    .withMessage("At least one sale item is required"),
+  body("items.*.itemId")
+    .optional({ nullable: true, checkFalsy: true })
+    .isMongoId()
+    .withMessage("Invalid item ID"),
+  body("items.*.itemName")
+    .optional({ nullable: true })
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage("Item name must be between 2 and 100 characters"),
-  body("buyingPrice")
+  body("items.*.buyingPrice")
+    .optional({ nullable: true, checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage("Buying price must be a positive number"),
-  body("sellingPrice")
+  body("items.*.sellingPrice")
     .isFloat({ min: 0 })
     .withMessage("Selling price must be a positive number"),
-  body("quantity").isInt({ min: 1 }).withMessage("Quantity must be at least 1"),
+  body("items.*.quantity")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be at least 1"),
+  body("customer.name")
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Customer name must be between 2 and 100 characters"),
+  body("customer.contact")
+    .trim()
+    .isLength({ min: 3, max: 40 })
+    .withMessage("Customer contact is required"),
+  body("customer.address")
+    .trim()
+    .isLength({ min: 3, max: 250 })
+    .withMessage("Customer address is required"),
+  body("customer.userId")
+    .optional({ nullable: true, checkFalsy: true })
+    .isMongoId()
+    .withMessage("Invalid customer user ID"),
+  body("additionalCharges")
+    .optional()
+    .isArray()
+    .withMessage("Additional charges must be an array"),
+  body("additionalCharges.*.label")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage("Additional charge label is required"),
+  body("additionalCharges.*.value")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Additional charge value must be a positive number"),
+  body("additionalCosts")
+    .optional()
+    .isArray()
+    .withMessage("Additional costs must be an array"),
+  body("additionalCosts.*.label")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage("Additional cost label is required"),
+  body("additionalCosts.*.value")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Additional cost value must be a positive number"),
   body("dateTime").optional().isISO8601().withMessage("Invalid date format"),
   handleValidationErrors,
 ];

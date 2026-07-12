@@ -8,7 +8,7 @@ const router = express.Router();
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
-const nodemailer = require("nodemailer");
+const { sendPasswordResetEmail } = require("../utils/email");
 require("dotenv").config();
 
 // Generate JWT token
@@ -108,30 +108,7 @@ router.post("/forgot-password", async (req, res) => {
       user.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
       await user.save();
 
-      const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-
-      const message = `
-        <p>You requested a password reset.</p>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-        <p>This link will expire in 10 minutes.</p>
-      `;
-
-      // 4. Configure transporter
-      const transporter = nodemailer.createTransport({
-        service: "Gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-
-      // 5. Send the email
-      await transporter.sendMail({
-        to: user.email,
-        subject: "Password Reset Request",
-        html: message,
-      });
+      await sendPasswordResetEmail(user.email, resetToken);
     }
 
     // 🔒 Always return success (prevents email enumeration)
@@ -220,8 +197,8 @@ passport.use(
       } catch (error) {
         done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 // Configure Facebook Strategy
@@ -275,8 +252,8 @@ passport.use(
       } catch (error) {
         done(error, null);
       }
-    }
-  )
+    },
+  ),
 );
 
 // Serialize user
@@ -297,7 +274,7 @@ passport.deserializeUser(async (id, done) => {
 // Google OAuth routes
 router.get(
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", { scope: ["profile", "email"] }),
 );
 
 router.get(
@@ -309,13 +286,13 @@ router.get(
 
     // Redirect to frontend with token
     res.redirect(`${process.env.CLIENT_URL}/oauth-callback?token=${token}`);
-  }
+  },
 );
 
 // Facebook OAuth routes
 router.get(
   "/facebook",
-  passport.authenticate("facebook", { scope: ["email"] })
+  passport.authenticate("facebook", { scope: ["email"] }),
 );
 
 router.get(
@@ -327,7 +304,7 @@ router.get(
 
     // Redirect to frontend with token
     res.redirect(`${process.env.CLIENT_URL}/oauth-callback?token=${token}`);
-  }
+  },
 );
 
 // Get current user

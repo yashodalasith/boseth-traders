@@ -150,6 +150,7 @@ router.post("/", auth, admin, upload.array("images", 5), async (req, res) => {
       modelNumber,
       description,
       price,
+      buyingPrice,
       category,
       brand,
       availability,
@@ -188,6 +189,10 @@ router.post("/", auth, admin, upload.array("images", 5), async (req, res) => {
       modelNumber,
       description,
       price,
+      buyingPrice:
+        buyingPrice !== undefined && buyingPrice !== ""
+          ? Number(buyingPrice)
+          : undefined,
       category: categoryDoc._id,
       brand: brandDoc._id,
       availability,
@@ -264,6 +269,12 @@ router.put("/:id", auth, admin, upload.array("images", 5), async (req, res) => {
     if (updates.modelNumber) item.modelNumber = updates.modelNumber;
     if (updates.description) item.description = updates.description;
     if (updates.price) item.price = updates.price;
+    if (updates.buyingPrice !== undefined) {
+      item.buyingPrice =
+        updates.buyingPrice === "" || updates.buyingPrice === null
+          ? undefined
+          : Number(updates.buyingPrice);
+    }
     if (updates.availability) item.availability = updates.availability;
     if (updates.quantity) item.quantity = updates.quantity;
     if (updates.hasDiscount !== undefined)
@@ -285,6 +296,28 @@ router.put("/:id", auth, admin, upload.array("images", 5), async (req, res) => {
     res.json(item);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+// Delete item (admin only)
+router.delete("/:id", auth, admin, async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Delete images from Cloudinary
+    for (const image of item.images) {
+      await cloudinary.uploader.destroy(image.publicId);
+    }
+
+    await Item.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Item deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

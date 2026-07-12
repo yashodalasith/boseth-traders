@@ -284,7 +284,7 @@ const Home = () => {
     },
     {
       icon: <Truck className="w-8 h-8" />,
-      title: "24-Hour Delivery",
+      title: "Home Delivery",
       description: "Island-wide delivery with secure packaging",
       gradient: "from-green-500 to-emerald-400",
     },
@@ -296,7 +296,7 @@ const Home = () => {
     },
     {
       icon: <Headphones className="w-8 h-8" />,
-      title: "24/7 Support",
+      title: "Customer Support",
       description: "Round-the-clock customer service for all your needs",
       gradient: "from-emerald-600 to-green-500",
     },
@@ -943,16 +943,27 @@ const Home = () => {
                 since 2004.
               </p>
               <div className="flex space-x-4">
-                {[Facebook, Twitter, Instagram, Youtube].map((Icon, index) => (
+                <motion.a
+                  href="https://www.facebook.com/profile.php?id=61578911536697"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ y: -2 }}
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors"
+                >
+                  <Facebook className="w-5 h-5" />
+                </motion.a>
+
+                {import.meta.env.VITE_SHOW_INSTAGRAM === "true" && (
                   <motion.a
-                    key={index}
-                    href="#"
+                    href="https://www.instagram.com/boseth_traders?igsh=MWNxbDduc2xnM3oxcQ=="
+                    target="_blank"
+                    rel="noopener noreferrer"
                     whileHover={{ y: -2 }}
                     className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors"
                   >
-                    <Icon className="w-5 h-5" />
+                    <Instagram className="w-5 h-5" />
                   </motion.a>
-                ))}
+                )}
               </div>
             </div>
 

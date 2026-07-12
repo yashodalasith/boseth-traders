@@ -15,7 +15,7 @@ router.put("/me", auth, async (req, res) => {
     const updates = req.body;
     const allowedUpdates = ["name", "email", "address", "contact"];
     const isValidOperation = Object.keys(updates).every((update) =>
-      allowedUpdates.includes(update)
+      allowedUpdates.includes(update),
     );
 
     if (!isValidOperation) {
@@ -81,7 +81,7 @@ router.delete("/me/favorites/:itemId", auth, async (req, res) => {
     }
 
     req.user.favorites = req.user.favorites.filter(
-      (id) => id.toString() !== itemId
+      (id) => id.toString() !== itemId,
     );
     await req.user.save();
 
@@ -143,7 +143,7 @@ router.delete("/me/wishlist/:itemId", auth, async (req, res) => {
     }
 
     req.user.wishlist = req.user.wishlist.filter(
-      (id) => id.toString() !== itemId
+      (id) => id.toString() !== itemId,
     );
     await req.user.save();
 
@@ -160,7 +160,34 @@ router.delete("/me/wishlist/:itemId", auth, async (req, res) => {
 // Get all users (admin only)
 router.get("/", auth, admin, async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const { search, role, limit } = req.query;
+    const query = {};
+
+    if (role) {
+      query.role = role;
+    }
+
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+      query.$or = [
+        { username: searchRegex },
+        { email: searchRegex },
+        { name: searchRegex },
+      ];
+    }
+
+    let usersQuery = User.find(query)
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    if (limit) {
+      const parsedLimit = Number.parseInt(limit, 10);
+      if (!Number.isNaN(parsedLimit) && parsedLimit > 0) {
+        usersQuery = usersQuery.limit(parsedLimit);
+      }
+    }
+
+    const users = await usersQuery;
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -194,7 +221,7 @@ router.put("/:id", auth, admin, async (req, res) => {
     const updates = req.body;
     const allowedUpdates = ["name", "email", "address", "contact", "role"];
     const isValidOperation = Object.keys(updates).every((update) =>
-      allowedUpdates.includes(update)
+      allowedUpdates.includes(update),
     );
 
     if (!isValidOperation) {

@@ -29,6 +29,7 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
     modelNumber: "",
     description: "",
     price: "",
+    buyingPrice: "",
     category: "",
     brand: "",
     availability: "not specified",
@@ -64,6 +65,7 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
         modelNumber: item.modelNumber || "",
         description: item.description || "",
         price: item.price || "",
+        buyingPrice: item.buyingPrice ?? "",
         category: item.category?.name || "",
         brand: item.brand?.name || "",
         availability: item.availability || "not specified",
@@ -84,6 +86,7 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
         modelNumber: "",
         description: "",
         price: "",
+        buyingPrice: "",
         category: "",
         brand: "",
         availability: "not specified",
@@ -115,9 +118,9 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
       [name]:
         type === "checkbox"
           ? checked
-          : name === "quantity" || name === "price" || name === "discountValue"
-          ? Number(value)
-          : value,
+          : ["quantity", "price", "buyingPrice", "discountValue"].includes(name)
+            ? Number(value)
+            : value,
     }));
   };
 
@@ -153,7 +156,7 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
       (!formData.quantity || formData.quantity <= 0)
     ) {
       setQuantityError(
-        "Quantity must be greater than 0 when item is available"
+        "Quantity must be greater than 0 when item is available",
       );
       return;
     }
@@ -357,7 +360,7 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price (Rs.) *
+                Selling Price per Item (Rs.) *
               </label>
               <input
                 type="number"
@@ -371,6 +374,23 @@ const ItemModal = ({ isOpen, onClose, onSave, item }) => {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Buying Price per Item (Rs.)
+              </label>
+              <input
+                type="number"
+                name="buyingPrice"
+                value={formData.buyingPrice}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Enhanced Category Section */}
             <div>
               <div className="flex items-center justify-between mb-1">

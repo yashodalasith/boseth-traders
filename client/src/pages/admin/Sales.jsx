@@ -18,8 +18,9 @@ const AdminSales = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSale, setEditingSale] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { getSales, addSale } = useItem();
+  const { getSales, addSale, updateSale, deleteSale } = useItem();
 
   useEffect(() => {
     loadSales();
@@ -45,14 +46,23 @@ const AdminSales = () => {
     let filtered = sales;
 
     if (searchTerm) {
-      filtered = filtered.filter(
-        (sale) =>
-          sale.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (sale.item &&
-            sale.item.modelNumber
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase()))
-      );
+      filtered = filtered.filter((sale) => {
+        const itemNames = (sale.items || [])
+          .map((item) => item.itemName?.toLowerCase() || "")
+          .join(" ");
+        const modelNumbers = (sale.items || [])
+          .map((item) =>
+            item.item?.modelNumber ? item.item.modelNumber.toLowerCase() : "",
+          )
+          .join(" ");
+        const customerName = sale.customer?.name?.toLowerCase() || "";
+
+        return (
+          itemNames.includes(searchTerm.toLowerCase()) ||
+          modelNumbers.includes(searchTerm.toLowerCase()) ||
+          customerName.includes(searchTerm.toLowerCase())
+        );
+      });
     }
 
     if (dateFilter) {
@@ -76,15 +86,51 @@ const AdminSales = () => {
     }
   };
 
+  const handleSaveSale = async (saleData) => {
+    try {
+      if (editingSale) {
+        await updateSale(editingSale._id, saleData);
+      } else {
+        await addSale(saleData);
+      }
+
+      setEditingSale(null);
+      setIsModalOpen(false);
+      loadSales();
+    } catch (error) {
+      console.error("Error saving sale:", error);
+    }
+  };
+
+  const handleEditClick = (sale) => {
+    setEditingSale(sale);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = async (sale) => {
+    if (
+      !window.confirm(
+        "Delete this sale entry? This will adjust item sales counts.",
+      )
+    )
+      return;
+    try {
+      await deleteSale(sale._id);
+      loadSales();
+    } catch (error) {
+      console.error("Error deleting sale:", error);
+    }
+  };
+
   const calculateTotal = (salesData) => {
     return salesData.reduce((total, sale) => total + sale.totalSale, 0);
   };
 
   const calculateProfit = (salesData) => {
-    return salesData.reduce((total, sale) => {
-      const profit = (sale.sellingPrice - sale.buyingPrice) * sale.quantity;
-      return total + profit;
-    }, 0);
+    return salesData.reduce(
+      (total, sale) => total + Number(sale.netProfit || 0),
+      0,
+    );
   };
 
   if (loading) {
@@ -204,84 +250,88 @@ const AdminSales = () => {
             <thead>
               <tr className="bg-gray-50">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Item
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Items
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date & Time
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Buying Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Selling Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Total Sale
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Profit
+                  Net Profit / Loss
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredSales.length > 0 ? (
-                filteredSales.map((sale) => {
-                  const profit =
-                    (sale.sellingPrice - sale.buyingPrice) * sale.quantity;
-
-                  return (
-                    <tr key={sale._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Package size={20} className="text-green-600" />
+                filteredSales.map((sale) => (
+                  <tr key={sale._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {sale.customer?.name || "Unknown customer"}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {sale.customer?.contact || ""}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        {(sale.items || []).map((item, index) => (
+                          <div
+                            key={`${sale._id}-${index}`}
+                            className="text-sm text-gray-700"
+                          >
+                            {item.itemName} × {item.quantity}
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {sale.itemName}
-                            </div>
-                            {sale.item && (
-                              <div className="text-sm text-gray-500">
-                                {sale.item.modelNumber}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(sale.dateTime).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {sale.quantity}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Rs. {sale.buyingPrice.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Rs. {sale.sellingPrice.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        Rs. {sale.totalSale.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <span
-                          className={
-                            profit >= 0 ? "text-green-600" : "text-red-600"
-                          }
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(sale.dateTime).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Rs. {Number(sale.totalSale || 0).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <span
+                        className={
+                          Number(sale.netProfit || 0) >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        Rs. {Number(sale.netProfit || 0).toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEditClick(sale)}
+                          className="text-sm text-blue-600 hover:underline"
                         >
-                          Rs. {profit.toLocaleString()}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(sale)}
+                          className="text-sm text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="5"
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     {sales.length === 0
@@ -298,8 +348,12 @@ const AdminSales = () => {
       {/* Sales Entry Modal */}
       <SalesEntryModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleAddSale}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingSale(null);
+        }}
+        onSave={handleSaveSale}
+        initialSale={editingSale}
       />
     </div>
   );
