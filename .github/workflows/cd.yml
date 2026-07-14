@@ -1,0 +1,76 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch, 'release/')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the exact commit built in CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Detect changed paths (on built commit)
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            client:
+              - 'client/**'
+            server:
+              - 'server/**'
+
+      - name: Login to GHCR (to pull images built in CI)
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Determine push tag
+        run: |
+          BRANCH=${{ github.event.workflow_run.head_branch }}
+          if [[ "$BRANCH" == "main" ]]; then
+            echo "TAG=latest" >> $GITHUB_ENV
+          elif [[ "$BRANCH" == release/* ]]; then
+            # strip prefix
+            TAG=${BRANCH#release/}
+            echo "TAG=$TAG" >> $GITHUB_ENV
+          else
+            echo "TAG=latest" >> $GITHUB_ENV
+          fi
+
+      - name: Push client image to Docker Hub
+        if: steps.filter.outputs.client == 'true'
+        run: |
+          GHCR=ghcr.io/${{ github.repository_owner }}/boseth-traders-client:${{ github.event.workflow_run.head_sha }}
+          DH=${{ secrets.DOCKER_USERNAME }}/boseth-traders-client:${TAG}
+          docker pull $GHCR
+          docker tag $GHCR $DH
+          docker push $DH
+
+      - name: Push server image to Docker Hub
+        if: steps.filter.outputs.server == 'true'
+        run: |
+          GHCR=ghcr.io/${{ github.repository_owner }}/boseth-traders-server:${{ github.event.workflow_run.head_sha }}
+          DH=${{ secrets.DOCKER_USERNAME }}/boseth-traders-server:${TAG}
+          docker pull $GHCR
+          docker tag $GHCR $DH
+          docker push $DH
