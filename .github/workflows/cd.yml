@@ -30,6 +30,28 @@ jobs:
             server:
               - 'server/**'
 
+      - name: Determine built images from CI run
+        id: ci-jobs
+        run: |
+          CI_RUN_ID=${{ github.event.workflow_run.id }}
+          OWNER=${{ github.repository_owner }}
+          REPO=${{ github.event.repository.name }}
+          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/$OWNER/$REPO/actions/runs/$CI_RUN_ID/jobs?per_page=50")
+          echo "$RESPONSE" > ci_jobs.json
+          CLIENT_STATUS=$(echo "$RESPONSE" | jq -r '.jobs[] | select(.name == "client-build") | .conclusion' | head -n 1)
+          SERVER_STATUS=$(echo "$RESPONSE" | jq -r '.jobs[] | select(.name == "server-build") | .conclusion' | head -n 1)
+          if [ "$CLIENT_STATUS" = "success" ]; then
+            echo "push_client=true" >> $GITHUB_OUTPUT
+          else
+            echo "push_client=false" >> $GITHUB_OUTPUT
+          fi
+          if [ "$SERVER_STATUS" = "success" ]; then
+            echo "push_server=true" >> $GITHUB_OUTPUT
+          else
+            echo "push_server=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Login to GHCR (to pull images built in CI)
         uses: docker/login-action@v2
         with:
@@ -50,7 +72,6 @@ jobs:
           if [[ "$BRANCH" == "main" ]]; then
             echo "TAG=latest" >> $GITHUB_ENV
           elif [[ "$BRANCH" == release/* ]]; then
-            # strip prefix
             TAG=${BRANCH#release/}
             echo "TAG=$TAG" >> $GITHUB_ENV
           else
@@ -58,7 +79,7 @@ jobs:
           fi
 
       - name: Push client image to Docker Hub
-        if: steps.filter.outputs.client == 'true'
+        if: steps.ci-jobs.outputs.push_client == 'true'
         run: |
           GHCR=ghcr.io/${{ github.repository_owner }}/boseth-traders-client:${{ github.event.workflow_run.head_sha }}
           DH=${{ secrets.DOCKER_USERNAME }}/boseth-traders-client:${TAG}
@@ -67,7 +88,7 @@ jobs:
           docker push $DH
 
       - name: Push server image to Docker Hub
-        if: steps.filter.outputs.server == 'true'
+        if: steps.ci-jobs.outputs.push_server == 'true'
         run: |
           GHCR=ghcr.io/${{ github.repository_owner }}/boseth-traders-server:${{ github.event.workflow_run.head_sha }}
           DH=${{ secrets.DOCKER_USERNAME }}/boseth-traders-server:${TAG}
