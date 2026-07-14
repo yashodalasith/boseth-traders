@@ -17,6 +17,7 @@ node_modules/
 logs/
 
 # Runtime data
+# Trigger server rebuild for deployment
 
 pids
 _.pid
