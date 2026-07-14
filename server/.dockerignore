@@ -1,0 +1,51 @@
+# Dependencies
+
+node_modules/
+
+# Environment variables
+
+.env
+
+# Git
+
+.git
+.gitignore
+
+# Logs
+
+\*.log
+logs/
+
+# Runtime data
+
+pids
+_.pid
+_.seed
+\*.pid.lock
+
+# Coverage
+
+coverage/
+
+# MongoDB local data
+
+data/
+mongodb/
+
+# Uploads/temp (only if generated locally and shouldn't be in the image)
+
+uploads/
+temp/
+
+# OS files
+
+.DS_Store
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Docker files that don't need to be copied into the image
+
+docker-compose.yml
+README.md
