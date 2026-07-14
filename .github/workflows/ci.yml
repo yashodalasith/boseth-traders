@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - 'release/**'
+      - "release/**"
   pull_request:
     branches:
       - main
-      - 'release/**'
+      - "release/**"
 
 permissions:
   contents: read
@@ -42,8 +42,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore client .env from secret (if provided)
-        if: ${{ secrets.CLIENT_ENV != '' }}
+      - name: Restore client .env from secret
         run: |
           mkdir -p client
           echo "${{ secrets.CLIENT_ENV }}" > client/.env
@@ -88,8 +87,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore server .env from secret (if provided)
-        if: ${{ secrets.SERVER_ENV != '' }}
+      - name: Restore server .env from secret
         run: |
           mkdir -p server
           echo "${{ secrets.SERVER_ENV }}" > server/.env
