@@ -22,9 +22,8 @@ const createTransporter = () => {
   if (process.env.NODE_ENV === "production") {
     return nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
+      port: 465,
+      secure: true,
       family: 4,
 
       auth: {
