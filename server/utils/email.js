@@ -25,6 +25,7 @@ const createTransporter = () => {
       port: 587,
       secure: false,
       requireTLS: true,
+      family: 4,
 
       auth: {
         user: process.env.EMAIL_USER,

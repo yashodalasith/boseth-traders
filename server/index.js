@@ -5,6 +5,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
 const passport = require("passport");
+const dns = require("dns").promises;
 require("dotenv").config();
 
 // Import routes
@@ -21,6 +22,7 @@ const { startAdminMessageScheduler } = require("./utils/adminMessageScheduler");
 
 // Initialize express app
 const app = express();
+app.set("trust proxy", 1);
 
 // Security middleware
 app.use(helmet());
@@ -91,6 +93,17 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/subscribers", subscriberRoutes);
+app.get("/smtp-test", async (req, res) => {
+  try {
+    const result = await dns.lookup("smtp.gmail.com");
+    console.log(result);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(err);
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
