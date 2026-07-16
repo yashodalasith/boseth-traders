@@ -5,7 +5,6 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
 const passport = require("passport");
-const dns = require("dns").promises;
 require("dotenv").config();
 
 // Import routes
@@ -93,47 +92,6 @@ app.use("/api/sales", salesRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact-messages", contactMessageRoutes);
 app.use("/api/subscribers", subscriberRoutes);
-app.get("/smtp-test", async (req, res) => {
-  try {
-    const result = await dns.lookup("smtp.gmail.com");
-    console.log(result);
-
-    res.json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json(err);
-  }
-});
-
-const net = require("net");
-
-app.get("/smtp-port-test/:port", (req, res) => {
-  const port = Number(req.params.port);
-  const socket = new net.Socket();
-
-  socket.setTimeout(10000);
-
-  socket.connect(port, "smtp.gmail.com", () => {
-    socket.destroy();
-    res.json({ success: true, port });
-  });
-
-  socket.on("timeout", () => {
-    socket.destroy();
-    res.status(500).json({
-      success: false,
-      error: `Timeout connecting to smtp.gmail.com:${port}`,
-    });
-  });
-
-  socket.on("error", (err) => {
-    res.status(500).json({
-      success: false,
-      error: err.code,
-      message: err.message,
-    });
-  });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

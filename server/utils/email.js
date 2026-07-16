@@ -20,6 +20,9 @@ const escapeHtml = (value) =>
     .replace(/'/g, "&#39;");
 
 const sendBrevoEmail = async (payload) => {
+  console.log("BREVO PAYLOAD:");
+  console.log(JSON.stringify(payload, null, 2));
+
   await axios.post("https://api.brevo.com/v3/smtp/email", payload, {
     headers: {
       accept: "application/json",
@@ -79,6 +82,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
     });
   }
 
+  console.log("EMAIL_USER =", process.env.EMAIL_USER);
   // Production -> Brevo API
   await sendBrevoEmail({
     sender: {
