@@ -105,6 +105,36 @@ app.get("/smtp-test", async (req, res) => {
   }
 });
 
+const net = require("net");
+
+app.get("/smtp-port-test/:port", (req, res) => {
+  const port = Number(req.params.port);
+  const socket = new net.Socket();
+
+  socket.setTimeout(10000);
+
+  socket.connect(port, "smtp.gmail.com", () => {
+    socket.destroy();
+    res.json({ success: true, port });
+  });
+
+  socket.on("timeout", () => {
+    socket.destroy();
+    res.status(500).json({
+      success: false,
+      error: `Timeout connecting to smtp.gmail.com:${port}`,
+    });
+  });
+
+  socket.on("error", (err) => {
+    res.status(500).json({
+      success: false,
+      error: err.code,
+      message: err.message,
+    });
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
