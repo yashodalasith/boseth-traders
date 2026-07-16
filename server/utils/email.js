@@ -19,6 +19,24 @@ const escapeHtml = (value) =>
     .replace(/'/g, "&#39;");
 
 const createTransporter = () => {
+  if (process.env.NODE_ENV === "production") {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
+    });
+  }
+
   return nodemailer.createTransport({
     service: "Gmail",
     auth: {
@@ -30,6 +48,18 @@ const createTransporter = () => {
 
 const sendPasswordResetEmail = async (email, resetToken) => {
   const transporter = createTransporter();
+  if (process.env.NODE_ENV === "production") {
+    console.log("EMAIL_USER:", process.env.EMAIL_USER);
+    console.log(
+      "EMAIL_PASS exists:",
+      !!process.env.EMAIL_PASS,
+      "Length:",
+      process.env.EMAIL_PASS?.length,
+    );
+
+    await transporter.verify();
+    console.log("SMTP connection successful");
+  }
   const resetUrl = `${getClientBaseUrl()}/reset-password/${resetToken}`;
 
   const mailOptions = {

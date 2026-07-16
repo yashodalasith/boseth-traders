@@ -95,3 +95,8 @@ jobs:
           docker pull $GHCR
           docker tag $GHCR $DH
           docker push $DH
+
+      - name: Trigger Render Backend Deployment
+        if: steps.ci-jobs.outputs.push_server == 'true'
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
