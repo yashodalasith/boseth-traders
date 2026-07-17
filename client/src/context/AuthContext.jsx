@@ -104,17 +104,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const resetPassword = async (token, newPassword) => {
-    try {
-      await api.post(`/auth/reset-password/${token}`, {
-        password: newPassword,
-      });
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Password reset failed",
-      };
-    }
+    const response = await api.post(`/auth/reset-password/${token}`, {
+      password: newPassword,
+    });
+
+    return response.data;
   };
 
   const updateProfile = async (userData) => {

@@ -54,9 +54,9 @@ const Header = () => {
       transition={{ duration: 0.45 }}
       className="sticky top-0 z-50 border-b border-emerald-100 bg-white/90 backdrop-blur-md"
     >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between gap-6">
-          <div className="flex-shrink-0">
+      <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-20 items-center justify-between gap-3 xl:gap-5">
+          <div className="shrink-0">
             <Link to="/" className="flex items-center gap-3">
               <img
                 src="/images/logo.png"
@@ -74,8 +74,8 @@ const Header = () => {
             </Link>{" "}
           </div>
 
-          <div className="hidden lg:flex flex-1 justify-center">
-            <nav className="flex items-center gap-2">
+          <div className="hidden lg:flex flex-1 justify-center min-w-0">
+            <nav className="flex items-center gap-1 xl:gap-2">
               {navigationLinks.map((link) => (
                 <Link
                   key={link.label}
@@ -88,10 +88,10 @@ const Header = () => {
             </nav>
           </div>
 
-          <div className="hidden lg:flex flex-shrink-0 items-center gap-4">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-4 min-w-0">
             <form
               onSubmit={handleSearch}
-              className="relative w-72 xl:w-80 2xl:w-96"
+              className="relative w-[220px] xl:w-[280px] 2xl:w-[340px]"
             >
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -133,7 +133,7 @@ const Header = () => {
                 {user.role === "admin" && (
                   <Link
                     to="/admin/dashboard"
-                    className="rounded-full border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
+                    className="rounded-full border border-emerald-200 px-3 xl:px-4 py-2 whitespace-nowrap text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
                   >
                     Admin Dashboard
                   </Link>
@@ -158,13 +158,13 @@ const Header = () => {
               <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                  className="rounded-full border border-gray-200 px-3 xl:px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:shadow-xl"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-600 to-green-500 px-4 xl:px-5 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:shadow-xl"
                 >
                   Register
                   <ArrowRight className="h-4 w-4" />
@@ -240,7 +240,7 @@ const Header = () => {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700"
+                      className="rounded-full border border-gray-200 px-3 xl:px-4 whitespace-nowrap py-2 text-sm font-medium text-gray-700"
                     >
                       Logout
                     </button>
