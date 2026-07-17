@@ -190,6 +190,15 @@ const adjustItemsByDifference = async (differenceMap, session = null) => {
     item.quantity = Math.max(0, Number(item.quantity || 0) + inventoryDelta);
     item.salesCount = Math.max(0, Number(item.salesCount || 0) + salesDelta);
 
+    // Automatically update availability
+    if (item.availability !== "not specified") {
+      if (item.quantity === 0) {
+        item.availability = "not available";
+      } else {
+        item.availability = "available";
+      }
+    }
+
     await item.save({ session: session || undefined });
   }
 };
