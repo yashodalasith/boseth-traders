@@ -997,7 +997,7 @@ const Home = () => {
                   <div className="w-8 h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center">
                     <Globe className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span>123 Main Street, Nugegoda</span>
+                  <span>No.282 D 01, Kotte Road, Nugegoda, Sri Lanka</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center">
