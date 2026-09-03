@@ -124,7 +124,7 @@ const Home = () => {
       const increments = {
         customers: 12500 / steps,
         products: 8500 / steps,
-        years: 20 / steps,
+        years: 10 / steps,
         satisfaction: 98 / steps,
       };
 
@@ -438,7 +438,7 @@ const Home = () => {
               Discover premium electronics & home appliances with
               <span className="text-emerald-300 font-semibold">
                 {" "}
-                20+ years{" "}
+                10+ years{" "}
               </span>
               of trusted excellence
             </motion.p>
@@ -817,7 +817,7 @@ const Home = () => {
               </h2>
 
               <p className="text-gray-600 text-lg mb-6">
-                Since 2004, Boseth Traders has been at the forefront of
+                Since 2016, Boseth Traders has been at the forefront of
                 revolutionizing home and commercial appliance retail in Sri
                 Lanka. What started as a small family business has grown into a
                 trusted household name.
@@ -825,8 +825,7 @@ const Home = () => {
 
               <div className="space-y-4 mb-8">
                 {[
-                  "20+ years of industry experience",
-                  "ISO 9001:2015 Certified",
+                  "10+ years of industry experience",
                   "Authorized dealer for 50+ global brands",
                   "Island-wide service network",
                 ].map((item, index) => (
@@ -940,7 +939,7 @@ const Home = () => {
               </div>
               <p className="text-gray-400 mb-6">
                 Your trusted partner for premium electronics and home appliances
-                since 2004.
+                since 2016.
               </p>
               <div className="flex space-x-4">
                 <motion.a
@@ -997,7 +996,7 @@ const Home = () => {
                   <div className="w-8 h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center">
                     <Globe className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span>123 Main Street, Nugegoda</span>
+                  <span>No.282 D 01, Kotte Road, Nugegoda, Sri Lanka</span>
                 </li>
                 <li className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-emerald-900/50 rounded-lg flex items-center justify-center">
@@ -1019,12 +1018,12 @@ const Home = () => {
               <h3 className="text-lg font-bold mb-6">Business Hours</h3>
               <ul className="space-y-2 text-gray-400">
                 <li className="flex justify-between">
-                  <span>Mon - Sat</span>
-                  <span>9:00 AM - 8:00 PM</span>
+                  <span>Mon-Sat</span>
+                  <span>10:30 AM - 8:00 PM</span>
                 </li>
                 <li className="flex justify-between">
                   <span>Sunday</span>
-                  <span>10:00 AM - 6:00 PM</span>
+                  <span>10:30 AM - 6:00 PM</span>
                 </li>
               </ul>
             </div>

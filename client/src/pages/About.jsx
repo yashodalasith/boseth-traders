@@ -58,7 +58,7 @@ const About = () => {
               Our Story
             </h2>
             <p className="text-gray-600 mb-6">
-              Founded in 2003, Boseth Traders started as a small electronics
+              Founded in 2016, Boseth Traders started as a small electronics
               shop in Nugegoda. Through dedication and commitment to customer
               satisfaction, we have grown into a trusted name across Sri Lanka.
               Today, we offer a wide range of products including electronics,
@@ -164,9 +164,9 @@ const About = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">Opening Hours</h3>
                   <p className="text-gray-600">
-                    Monday - Saturday: 9:00 AM - 8:00 PM
+                    Monday - Saturday: 10:30 AM - 8:00 PM
                   </p>
-                  <p className="text-gray-600">Sunday: 9:00 AM - 6:00 PM</p>
+                  <p className="text-gray-600">Sunday: 10:30 AM - 6:00 PM</p>
                 </div>
               </div>
 
