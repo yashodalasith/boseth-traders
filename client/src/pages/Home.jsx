@@ -290,8 +290,8 @@ const Home = () => {
     },
     {
       icon: <RefreshCw className="w-8 h-8" />,
-      title: "Easy Returns",
-      description: "30-day return policy with no questions asked",
+      title: "Trusted Warranty",
+      description: "All products come under a trusted warranty",
       gradient: "from-teal-500 to-emerald-400",
     },
     {
